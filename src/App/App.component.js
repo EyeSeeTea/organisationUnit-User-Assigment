@@ -10,7 +10,6 @@ import log from 'loglevel';
 import appTheme from './app.theme';
 import LoadingMask from '../loading-mask/LoadingMask.component';
 import '../translationRegistration';
-import SectionTabs from '../TopBar/SectionTabs.component';
 import withStateFrom from 'd2-ui/lib/component-helpers/withStateFrom';
 import { Observable } from 'rx';
 import SinglePanelLayout from 'd2-ui/lib/layout/SinglePanel.component';
@@ -43,8 +42,6 @@ const sections$ = appState
             goToRoute(`/list/${sectionName}`);
         },
     }));
-
-const SectionTabsWrap = withStateFrom(sections$, SectionTabs);
 
 const withMuiContext = Object.assign(AppWithD2.childContextTypes, { muiTheme: React.PropTypes.object });
 class App extends AppWithD2 {
@@ -98,13 +95,7 @@ class App extends AppWithD2 {
         return (
             <div>
                 <HeaderBar />
-                <SectionTabsWrap />
-                {this.state.hasSection && !this.props.children.props.route.disableSidebar ? <TwoPanelLayout>
-                    <SideBar activeGroupName={this.props.params.groupName} activeModelType={this.props.params.modelType} />
-                    <MainContent>
-                        {this.props.children}
-                    </MainContent>
-                </TwoPanelLayout> : <SinglePanelLayout>
+                <SinglePanelLayout>
                     <MainContent>{this.props.children}</MainContent>
                 </SinglePanelLayout>}
                 <SnackbarContainer />

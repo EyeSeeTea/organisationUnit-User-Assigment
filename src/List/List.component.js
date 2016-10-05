@@ -262,7 +262,7 @@ const List = React.createClass({
         case 'share':
             return model.modelDefinition.isShareable === true; // TODO: Sharing is filtered out twice...
         case 'assignToOrgUnits':
-            return model.modelDefinition.name === 'dataSet' && model.access.write;
+            return (model.modelDefinition.name === 'dataSet' || model.modelDefinition.name === 'user') && model.access.write;
         case 'compulsoryDataElements':
             return model.modelDefinition.name === 'dataSet' && model.access.write;
         case 'sectionForm':

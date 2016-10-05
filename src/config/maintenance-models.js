@@ -4,6 +4,11 @@ export default {
             all: {
                 items: [],
             },
+            userSection: {
+                items: [
+                    'user',
+                ],
+            },            
             dataElementSection: {
                 items: [
                     'categoryOption',

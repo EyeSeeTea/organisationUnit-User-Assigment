@@ -14,8 +14,6 @@ import listActions from './List/list.actions';
 import snackActions from './Snackbar/snack.actions';
 import { initAppState, default as appState } from './App/appStateStore';
 import OrganisationUnitList from './List/organisation-unit-list/OrganisationUnitList.component.js';
-import MenuCardsForSection from './MenuCards/MenuCardsForSection.component';
-import MenuCardsForAllSections from './MenuCards/MenuCardsForAllSections.component';
 import OrganisationUnitHierarchy from './OrganisationUnitHierarchy';
 import OrganisationUnitLevels from './OrganisationUnitLevels/OrganisationUnitLevels.component';
 import EditOptionSet from './EditModel/EditOptionSet.component';
@@ -169,16 +167,8 @@ function cloneObject({ params }, replace, callback) {
 const routes = (
     <Router history={hashHistory}>
         <Route path="/" component={App} >
-            <IndexRedirect to="list/dataSetSection/dataSet" />
-            <Route
-                path="list/all" component={MenuCardsForAllSections}
-                onEnter={() => initState({ params: { groupName: 'all' } })}
-            />
+            <IndexRedirect to="list/userSection/user" />        
             <Route path="list/:groupName">
-                <IndexRoute
-                    component={MenuCardsForSection}
-                    onEnter={initState}                    
-                />
                 <Route
                     path="organisationUnit"
                     component={OrganisationUnitList}
