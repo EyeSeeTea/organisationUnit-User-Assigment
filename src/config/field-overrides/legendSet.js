@@ -3,7 +3,7 @@ import Legend from 'd2-ui/lib/legend/Legend.component';
 import { getInstance } from 'd2/lib/d2';
 import Store from 'd2-ui/lib/store/Store';
 import LinearProgress from 'material-ui/lib/linear-progress';
-import modelToEditStore from '../../EditModel/modelToEditStore';
+// import modelToEditStore from '../../EditModel/modelToEditStore';
 import log from 'loglevel';
 
 const legendStore = Store.create();
@@ -83,28 +83,28 @@ export default new Map([
 
             updateLegends = (newLegends) => {
                 getInstance()
-                    .then(d2 => d2.Api.getApi())
-                    .then(api => api.get('system/uid', { limit: newLegends.length }))
-                    .then(response => response.codes)
-                    .then(codes => {
-                        return newLegends.map((legend, index) => {
-                            legend.id = codes[index];
-                            return legend;
-                        });
-                    })
-                    .then(legends => {
-                        const model = modelToEditStore.getState();
-                        model[this.props.referenceProperty].clear();
+                    // .then(d2 => d2.Api.getApi())
+                    // .then(api => api.get('system/uid', { limit: newLegends.length }))
+                    // .then(response => response.codes)
+                    // .then(codes => {
+                    //     return newLegends.map((legend, index) => {
+                    //         legend.id = codes[index];
+                    //         return legend;
+                    //     });
+                    // })
+                    // .then(legends => {
+                    //     const model = modelToEditStore.getState();
+                    //     model[this.props.referenceProperty].clear();
 
-                        legends.forEach(legend => model[this.props.referenceProperty].add(legend));
+                    //     legends.forEach(legend => model[this.props.referenceProperty].add(legend));
 
-                        this.props.onChange({
-                            target: {
-                                value: model[this.props.referenceProperty],
-                            }
-                        });
-                    })
-                    .catch(log.error);
+                    //     this.props.onChange({
+                    //         target: {
+                    //             value: model[this.props.referenceProperty],
+                    //         }
+                    //     });
+                    // })
+                    // .catch(log.error);
             }
         },
         fieldOptions: {},

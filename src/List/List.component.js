@@ -11,19 +11,12 @@ import listActions from './list.actions';
 import ObserverRegistry from '../utils/ObserverRegistry.mixin';
 import Paper from 'material-ui/lib/paper';
 import Translate from 'd2-ui/lib/i18n/Translate.mixin';
-import ListActionBar from './ListActionBar.component';
 import SearchBox from './SearchBox.component';
 import LoadingStatus from './LoadingStatus.component';
 import camelCaseToUnderscores from 'd2-utilizr/lib/camelCaseToUnderscores';
 import Auth from 'd2-ui/lib/auth/Auth.mixin';
-import SharingDialog from 'd2-ui/lib/sharing/SharingDialog.component';
-import sharingStore from './sharing.store';
-import translationStore from './translation-dialog/translationStore';
-import TranslationDialog from 'd2-ui/lib/i18n/TranslationDialog.component';
 import orgUnitDialogStore from './organisation-unit-dialog/organisationUnitDialogStore';
 import OrgUnitDialog from './organisation-unit-dialog/OrgUnitDialog.component';
-import dataElementOperandStore from './compulsory-data-elements-dialog/compulsoryDataElementStore';
-import CompulsoryDataElementOperandDialog from './compulsory-data-elements-dialog/CompulsoryDataElementOperandDialog.component';
 import snackActions from '../Snackbar/snack.actions';
 import Heading from 'd2-ui/lib/headings/Heading.component';
 import fieldOrder from '../config/field-config/field-order';
@@ -43,26 +36,6 @@ function actionsThatRequireDelete(action) {
         return true;
     }
     return false;
-}
-
-function getTranslatablePropertiesForModelType(modelType) {
-    const fieldsForModel = fieldOrder.for(modelType);
-    const defaultTranslatableProperties = ['name', 'shortName'];
-
-    if (fieldsForModel.indexOf('description') >= 0) {
-        defaultTranslatableProperties.push('description');
-    }
-
-    switch (modelType) {
-    case 'dataElement':
-        return defaultTranslatableProperties.concat(['formName']);
-    case 'organisationUnitLevel':
-        return ['name'];
-    default:
-        break;
-    }
-
-    return defaultTranslatableProperties;
 }
 
 // TODO: Move this somewhere as a utility function, probably on the Pagination component (as a separate export) in d2-ui?
@@ -160,42 +133,15 @@ const List = React.createClass({
             this.setState({ detailsObject });
         });
 
-        const sharingStoreDisposable = sharingStore.subscribe(sharingState => {
-            this.setState(state => ({
-                sharing: sharingState,
-                dataRows: state.dataRows.map(row => {
-                    if (row.id === sharingState.model.id) {
-                        return Object.assign(row, { publicAccess: sharingState.model.publicAccess });
-                    }
-                    return row;
-                }),
-            }));
-        });
-
-        const translationStoreDisposable = translationStore.subscribe(translationState => {
-            this.setState({
-                translation: translationState,
-            });
-        });
-
         const orgUnitAssignmentStoreDisposable = orgUnitDialogStore.subscribe(orgunitassignmentState => {
             this.setState({
                 orgunitassignment: orgunitassignmentState,
             });
         });
 
-        const dataElementOperandStoreDisposable = dataElementOperandStore.subscribe(state => {
-            this.setState({
-                dataElementOperand: state,
-            });
-        });
-
         this.registerDisposable(sourceStoreDisposable);
         this.registerDisposable(detailsStoreDisposable);
-        this.registerDisposable(sharingStoreDisposable);
-        this.registerDisposable(translationStoreDisposable);
         this.registerDisposable(orgUnitAssignmentStoreDisposable);
-        this.registerDisposable(dataElementOperandStoreDisposable);
     },
 
     componentWillReceiveProps(newProps) {
@@ -205,15 +151,6 @@ const List = React.createClass({
                 translation: Object.assign({}, this.state.translation, { open: false }),
             });
         }
-    },
-
-    _translationSaved() {
-        snackActions.show({ message: 'translation_saved', action: 'ok', translate: true });
-    },
-
-    _translationError(errorMessage) {
-        log.error(errorMessage);
-        snackActions.show({ message: 'translation_save_error', translate: true });
     },
 
     _orgUnitAssignmentSaved() {
@@ -251,26 +188,10 @@ const List = React.createClass({
 
         // Switch action for special cases
         switch (action) {
-        case 'edit':
-            return model.access.write;
-        case 'clone':
-            return model.modelDefinition.name !== 'dataSet' && model.access.write;
-        case 'translate':
-            return model.access.read && model.modelDefinition.identifiableObject;
         case 'details':
             return model.access.read;
-        case 'share':
-            return model.modelDefinition.isShareable === true; // TODO: Sharing is filtered out twice...
         case 'assignToOrgUnits':
-            return (model.modelDefinition.name === 'dataSet' || model.modelDefinition.name === 'user') && model.access.write;
-        case 'compulsoryDataElements':
-            return model.modelDefinition.name === 'dataSet' && model.access.write;
-        case 'sectionForm':
-            return model.modelDefinition.name === 'dataSet' && model.access.write;
-        case 'dataEntryForm':
-            return model.modelDefinition.name === 'dataSet' && model.access.write;
-        case 'pdfDataSetForm':
-            return model.modelDefinition.name === 'dataSet' && model.access.read;
+            return model.modelDefinition.name === 'user' && model.access.write;
         default:
             return true;
         }
@@ -311,12 +232,6 @@ const List = React.createClass({
         const availableActions = Object.keys(contextActions)
             .filter(actionsThatRequireCreate, this)
             .filter(actionsThatRequireDelete, this)
-            .filter((actionName) => {
-                if (actionName === 'share') {
-                    return this.context.d2.models[this.props.params.modelType] && this.context.d2.models[this.props.params.modelType].isShareable;
-                }
-                return true;
-            })
             .reduce((actions, actionName) => {
                 // TODO: Don't re-assign param?
                 actions[actionName] = contextActions[actionName]; // eslint-disable-line no-param-reassign
@@ -346,20 +261,13 @@ const List = React.createClass({
         };
 
         const contextMenuIcons = {
-            clone: 'content_copy',
-            sharing: 'share',
             assignToOrgUnits: 'business',
-            sectionForm: 'assignment_turned_in',
-            dataEntryForm: 'assignment',
-            pdfDataSetForm: 'picture_as_pdf',
-            compulsoryDataElements: 'border_color',
         };
 
         return (
             <div>
                 <div>
-                    <Heading>{this.getTranslation(`${camelCaseToUnderscores(this.props.params.modelType)}_management`)}</Heading>
-                    <ListActionBar modelType={this.props.params.modelType} groupName={this.props.params.groupName} />
+                    <Heading>{this.getTranslation(`${camelCaseToUnderscores(this.props.params.modelType)}_management`)}</Heading>                    
                 </div>
                 <div>
                     <div style={{ float: 'left', width: '50%' }}>
@@ -394,20 +302,7 @@ const List = React.createClass({
                             />
                         : null}
                 </div>
-                {this.state.sharing.model ? <SharingDialog
-                    objectToShare={this.state.sharing.model}
-                    open={this.state.sharing.open && this.state.sharing.model}
-                    onRequestClose={this._closeSharingDialog}
-                /> : null }
-                {this.state.translation.model ? <TranslationDialog
-                    objectToTranslate={this.state.translation.model}
-                    objectTypeToTranslate={this.state.translation.model && this.state.translation.model.modelDefinition}
-                    open={this.state.translation.open}
-                    onTranslationSaved={this._translationSaved}
-                    onTranslationError={this._translationError}
-                    onRequestClose={this._closeTranslationDialog}
-                    fieldsToTranslate={getTranslatablePropertiesForModelType(this.props.params.modelType)}
-                /> : null }
+
                 {this.state.orgunitassignment.model ? <OrgUnitDialog
                     model={this.state.orgunitassignment.model}
                     root={this.state.orgunitassignment.root}
@@ -416,34 +311,8 @@ const List = React.createClass({
                     onOrgUnitAssignmentError={this._orgUnitAssignmentError}
                     onRequestClose={this._closeOrgUnitDialog}
                 /> : null }
-                {this.state.dataElementOperand.model ? (
-                    <CompulsoryDataElementOperandDialog
-                        model={this.state.dataElementOperand.model}
-                        dataElementOperands={this.state.dataElementOperand.dataElementOperands}
-                        open={this.state.dataElementOperand.open}
-                        onDataElementOperandsSaved={this._orgUnitAssignmentSaved}
-                        onDataElementOperandsError={this._orgUnitAssignmentError}
-                        onRequestClose={this._closeDataElementOperandDialog}
-                    />
-                ) : null}
             </div>
         );
-    },
-
-    _closeTranslationDialog() {
-        translationStore.setState(Object.assign({}, translationStore.state, {
-            open: false,
-        }));
-    },
-
-    _closeSharingDialog(sharingState) {
-        const model = sharingState
-            ? Object.assign(sharingStore.state.model, { publicAccess: sharingState.publicAccess })
-            : sharingStore.state.model;
-        sharingStore.setState(Object.assign({}, sharingStore.state, {
-            model,
-            open: false,
-        }));
     },
 
     _closeOrgUnitDialog() {
@@ -452,11 +321,6 @@ const List = React.createClass({
         }));
     },
 
-    _closeDataElementOperandDialog() {
-        dataElementOperandStore.setState(Object.assign({}, orgUnitDialogStore.state, {
-            open: false,
-        }));
-    },
 });
 
 export default List;
