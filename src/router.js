@@ -5,7 +5,6 @@ import App from './App/App.component';
 import List from './List/List.component';
 import { getInstance } from 'd2/lib/d2';
 import listActions from './List/list.actions';
-import snackActions from './Snackbar/snack.actions';
 import { initAppState, default as appState } from './App/appStateStore';
 
 function initState({ params }) {

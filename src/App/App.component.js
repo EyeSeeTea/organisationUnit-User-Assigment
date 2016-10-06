@@ -2,18 +2,16 @@ import React from 'react';
 import HeaderBarComponent from 'd2-ui/lib/app-header/HeaderBar';
 import headerBarStore$ from 'd2-ui/lib/app-header/headerBar.store';
 import MainContent from 'd2-ui/lib/layout/main-content/MainContent.component';
-// import SideBar from '../SideBar/SideBarContainer.component';
 import SnackbarContainer from '../Snackbar/SnackbarContainer.component';
 import { getInstance } from 'd2/lib/d2';
 import AppWithD2 from 'd2-ui/lib/app/AppWithD2.component';
 import log from 'loglevel';
 import appTheme from './app.theme';
 import LoadingMask from '../loading-mask/LoadingMask.component';
-import '../translationRegistration';
+// import '../translationRegistration';
 import withStateFrom from 'd2-ui/lib/component-helpers/withStateFrom';
 import { Observable } from 'rx';
 import SinglePanelLayout from 'd2-ui/lib/layout/SinglePanel.component';
-import TwoPanelLayout from 'd2-ui/lib/layout/TwoPanel.component';
 
 log.setLevel(log.levels.INFO);
 
