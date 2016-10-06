@@ -4,8 +4,7 @@ import camelCaseToUnderscores from 'd2-utilizr/lib/camelCaseToUnderscores';
 import isObject from 'd2-utilizr/lib/isObject';
 import snackActions from '../Snackbar/snack.actions';
 
-import maintenanceModels from '../config/maintenance-models';
-const sideBarConfig = maintenanceModels.getSideBarConfig();
+const sideBarConfig = {};
 
 const appState = Store.create();
 
