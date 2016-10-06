@@ -19,7 +19,6 @@ import orgUnitDialogStore from './organisation-unit-dialog/organisationUnitDialo
 import OrgUnitDialog from './organisation-unit-dialog/OrgUnitDialog.component';
 import snackActions from '../Snackbar/snack.actions';
 import Heading from 'd2-ui/lib/headings/Heading.component';
-import fieldOrder from '../config/field-config/field-order';
 import { Observable } from 'rx';
 
 // Filters out any actions `edit`, `clone` when the user can not update/edit this modelType
