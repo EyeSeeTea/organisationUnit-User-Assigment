@@ -190,6 +190,7 @@ class OrgUnitDialog extends React.Component {
                         <OrgUnitSelectByGroup
                             groups={this.state.groups}
                             selected={this.state.selected}
+                            intersectionPolicy={true}
                             onUpdateSelection={this.setNewSelection}
                         />
                         <OrgUnitSelectByLevel
