@@ -85,9 +85,6 @@
     "ckeditor": "^4.5.9",
     "jquery": "^2.2.3"
   },
-  "pre-commit": [
-    "validate"
-  ],
   "manifest.webapp": {
     "name": "Organisation Unit Assignment app",
     "icons": {

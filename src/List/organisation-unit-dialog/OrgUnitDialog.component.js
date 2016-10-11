@@ -58,8 +58,8 @@ class OrgUnitDialog extends React.Component {
                 selected: props.model.organisationUnits.toArray().map(i => i.id),
             });
         }
-    }
-
+    }   
+    
     setNewSelection(selected) {
         const d2 = this.context.d2;
         const modelOrgUnits = this.props.model.organisationUnits;
@@ -195,6 +195,7 @@ class OrgUnitDialog extends React.Component {
                         <OrgUnitSelectByLevel
                             levels={this.state.levels}
                             selected={this.state.selected}
+                            intersectionPolicy={true}
                             onUpdateSelection={this.setNewSelection}
                         />
                         <div style={{ marginTop: 16 }}>
