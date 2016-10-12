@@ -27,20 +27,6 @@ import { goToRoute } from '../router';
 
 const HeaderBar = withStateFrom(headerBarStore$, HeaderBarComponent);
 
-const sections$ = appState
-    .map(state => ({
-        sections: state.sideBar.mainSections,
-        current: state.sideBar.currentSection,
-        changeSection: (sectionName) => {
-            setAppState({
-                sideBar: Object.assign({}, state.sideBar, {
-                    currentSection: sectionName,
-                }),
-            });
-            goToRoute(`/list/${sectionName}`);
-        },
-    }));
-
 const withMuiContext = Object.assign(AppWithD2.childContextTypes, { muiTheme: React.PropTypes.object });
 class App extends AppWithD2 {
     getChildContext() {
