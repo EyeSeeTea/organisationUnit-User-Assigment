@@ -5,7 +5,9 @@ import FlatButton from 'material-ui/lib/flat-button';
 import RaisedButton from 'material-ui/lib/raised-button';
 
 import LoadingMask from 'd2-ui/lib/loading-mask/LoadingMask.component';
-
+import TextField from 'material-ui/lib/text-field';
+import Action from 'd2-ui/lib/action/Action';
+import { Observable } from 'rx';
 import OrgUnitTree from 'd2-ui/lib/org-unit-tree/OrgUnitTree.component';
 import OrgUnitSelectByLevel from 'd2-ui/lib/org-unit-select/OrgUnitSelectByLevel.component';
 import OrgUnitSelectByGroup from 'd2-ui/lib/org-unit-select/OrgUnitSelectByGroup.component';
@@ -18,12 +20,16 @@ class OrgUnitDialog extends React.Component {
         super(props, context);
 
         this.state = {
+            searchValue: '',    
+            originalRoots: [this.props.root],        
+            rootOrgUnits: [this.props.root],
             selected: this.props.model.organisationUnits.toArray().map(i => i.id),
             groups: [],
             levels: [],
             loading: false,
         };
 
+        this._searchOrganisationUnits = Action.create('searchOrganisationUnits');
         this.getTranslation = context.d2.i18n.getTranslation.bind(context.d2.i18n);
         this.toggleOrgUnit = this.toggleOrgUnit.bind(this);
         this.setNewSelection = this.setNewSelection.bind(this);
@@ -47,10 +53,33 @@ class OrgUnitDialog extends React.Component {
             .then(([
                 levels,
                 groups,
-            ]) => {
-                this.setState({ groups, levels });
+            ]) => {                
+                this.setState({ 
+                    groups, 
+                    levels });
             });
+            
+        this.disposable = this._searchOrganisationUnits.map(action => action.data)
+            .debounce(400)
+            .map(searchValue => {
+                if (!searchValue.trim()) {
+                    return Observable.just(this.state.originalRoots);
+                }
+
+                const organisationUnitRequest = this.context.d2.models.organisationUnits
+                    .filter().on('displayName').ilike(searchValue)
+                    .list({ fields: 'id,displayName,path,children::isNotEmpty'})
+                    .then(modelCollection => modelCollection.toArray());
+
+                return Observable.fromPromise(organisationUnitRequest);
+            })
+            .concatAll()
+            .subscribe((models) => this.setState({ rootOrgUnits: models }));            
     }
+    
+    componentWillUnmount() {
+        this.disposable && this.disposable.dispose();
+    }    
 
     componentWillReceiveProps(props) {
         if (props.model) {
@@ -121,8 +150,35 @@ class OrgUnitDialog extends React.Component {
             this.props.onRequestClose();
         }
     }
+    
+    renderRoots() {
+        if (this.state.rootOrgUnits.length) {
+            return (
+                <div style={{ maxHeight: 350, maxWidth: 480, overflow: 'auto' }}>
+                    {this.state.rootOrgUnits.map(rootOu => (
+                        <OrgUnitTree
+                            key={rootOu.id}
+                            selected={this.state.selected}
+                            root={rootOu}
+                            onClick={this.toggleOrgUnit}
+                            emitModel
+                            initiallyExpanded={[rootOu.id]}
+                        />
+                    ))}
+                </div>
+            );
+        }
+
+        return (
+            <div>{this.context.d2.i18n.getTranslation('no_roots_found')}</div>
+        );
+    }    
 
     render() {
+        if (!this.state.rootOrgUnits) {
+            return (<div>this.context.d2.i18n.getTranslation('determining_your_root_orgunits')</div>);
+        }
+                
         const {
             root,
         } = { ...this.props };
@@ -146,7 +202,7 @@ class OrgUnitDialog extends React.Component {
             },
             controls: {
                 position: 'fixed',
-                top: 56, right: 24,
+                top: 156, right: 24,
                 width: 475,
                 zIndex: 1,
                 background: 'white',
@@ -186,6 +242,12 @@ class OrgUnitDialog extends React.Component {
                             <LoadingMask />
                         </div>
                     ) : undefined}
+                    
+                    <TextField
+                        onChange={(event) => this._searchOrganisationUnits(event.target.value)}
+                        floatingLabelText={this.context.d2.i18n.getTranslation('filter_organisation_units_by_name')}
+                        fullWidth
+                    />                    
                     <div style={styles.controls}>
                         <OrgUnitSelectByGroup
                             groups={this.state.groups}
@@ -209,12 +271,7 @@ class OrgUnitDialog extends React.Component {
                     <div className="organisation-unit-tree__selected">
                         {`${this.state.selected.length} ${this.getTranslation('organisation_units_selected')}`}
                     </div>
-                    <OrgUnitTree
-                        root={root}
-                        selected={this.state.selected}
-                        initiallyExpanded={[root.id]}
-                        onClick={this.toggleOrgUnit}
-                    />
+                    {this.renderRoots()}                    
                 </div>
             </Dialog>
         );
@@ -232,3 +289,4 @@ OrgUnitDialog.contextTypes = {
 };
 
 export default OrgUnitDialog;
+
