@@ -1,0 +1,49 @@
+{
+	"account": {
+		"username":"thai",
+		"password":"ABCD1234"
+	},
+	"url": "dhis2.asia/psi",
+	"OUGroup": [
+		{
+			"id": "VOgm7qb5biX", 
+			"name" : "MM Donor - M_3MDG January 2013_now",
+			"level": [6,7]
+		},
+		{
+			"id": "IlLrTLSpXnB", 
+			"name" : "MM Donor - M_DFID September 2012_now",
+			"level": [6,7]
+		},
+		{
+			"id": "VZyng7VThug", 
+			"name" : "MM Donor - M_GFATM January 2015_June 2015",
+			"level": [6,7]
+		},
+		{
+			"id": "P3XVSZkF5aY", 
+			"name" : "MM Donor - M_GFATM January 2016 to now",
+			"level": [6,7]
+		},
+		{
+			"id": "UafT9Cfa321", 
+			"name" : "MM Donor - M_GFATM July 2015_December 2015",
+			"level": [6,7]
+		},
+		{
+			"id": "m3AyQrufAvG", 
+			"name" : "MM Donor - M_USAID January 2015_June 2015",
+			"level": [6,7]
+		},
+		{
+			"id": "zkPXiN2d0Kg", 
+			"name" : "MM Donor - M_USAID January 2016_now",
+			"level": [6,7]
+		},
+		{
+			"id": "NbjL7YGOHW9", 
+			"name" : "MM Donor - M_USAID July 2015_December 2015",
+			"level": [6,7]
+		}
+	]
+}
