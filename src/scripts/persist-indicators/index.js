@@ -1,4 +1,6 @@
 var request = require('request');
+var periods = require('./periods.js');
+
 var fs = require('fs')
 fs.readFile('config.json', 'utf8', function(err, conf) {
     if (err) {
@@ -143,8 +145,10 @@ AutoIndicatorsLoader.prototype.prepareParamIndicator = function(indicator) {
  * @param indicator The indicator 
  */
 AutoIndicatorsLoader.prototype.prepareParamPeriod = function(indicator) {
-    //TODO according to property "dataset" (monthly, yearly, ..)    
-    indicator.queryParams.push("dimension=pe:LAST_12_MONTHS");
+    //TODO according to property "dataset" (monthly, yearly, ..) 
+    var dataPeriods = periods.buildPeriods(indicator.periodType,indicator.periods)
+    dataPeriods = dataPeriods.join(";");   
+    indicator.queryParams.push("dimension=pe:"+dataPeriods);
 };
 
 /**
