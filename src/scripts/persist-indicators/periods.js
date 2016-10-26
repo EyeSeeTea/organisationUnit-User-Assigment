@@ -5,6 +5,7 @@ var moment = require('moment');
  *  'daily','weekly','monthly','yearly'
  */
 function Periods(){
+    //XXX Using isoWeek considering the number of week depends on its Thursday
     this.config = {
         daily:{
             format:'YYYY-MM-DD',
@@ -37,8 +38,8 @@ Periods.prototype.buildPeriods = function(type,num){
     if(!periodConfig){
         return periods;
     }
-    
-    var now = moment();
+    //We start from the previous completed period (previous month, week, ..)
+    var now = moment().add(-1, periodConfig.periodKey);
     for (var i = 0; i < num; i++) {
         //Format moment according to type
         var formattedNow = now.format(periodConfig.format);
