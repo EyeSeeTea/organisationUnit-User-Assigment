@@ -17,3 +17,5 @@ target/*
 
 npm-debug.log
 stats.json
+
+.vscode*
