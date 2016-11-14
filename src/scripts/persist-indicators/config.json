@@ -2,6 +2,7 @@
     "auth": "YXF1aW50YW5hOkFxdWludGFuYTIwMTY=",
     "protocol": "http",
     "url": "localhost:8080/api",
+    "apiversion": "/24",
     "attributes": {
         "dataSet": "aXsP3j3X4hw",
         "level": "Sj6xl57QkYN",
