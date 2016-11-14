@@ -17,13 +17,13 @@ fs.readFile('config.json', 'utf8', function(err, conf) {
 function AutoIndicatorsLoader(conf) {
     //used endpoints
     this.endpoints = {
-        INDICATORGROUPS: "/24/indicatorGroups.json?filter=name:eq:AutoIndicators&fields=indicators[*]",
-        ATTRIBUTE_BY_NAME: "/24/attributes?fields=id&filter=name:eq:",
-        DATASETS: "/24/dataSets/UID.json?fields=periodType",
-        ANALYTICS: "/24/analytics.json?displayProperty=NAME&skipMeta=true&",
-        DATAVALUESETS: "/24/dataValueSets" 
+        INDICATORGROUPS: conf.apiversion+"/indicatorGroups.json?filter=name:eq:AutoIndicators&fields=indicators[*]",
+        ATTRIBUTE_BY_NAME: conf.apiversion+"/attributes?fields=id&filter=name:eq:",
+        DATASETS: conf.apiversion+"/dataSets/UID.json?fields=periodType",
+        ANALYTICS: conf.apiversion+"/analytics.json?displayProperty=NAME&skipMeta=true&",
+        DATAVALUESETS: conf.apiversion+"/dataValueSets"
     };
-
+    
     //rest config
     this.conf = conf;
 
@@ -34,6 +34,7 @@ function AutoIndicatorsLoader(conf) {
         },
         url: this.conf.protocol + "://" + this.conf.url
     }
+        
     console.log("\nConfig:\n", JSON.stringify(this.conf, null, "\t"));
 };
 
@@ -136,7 +137,7 @@ AutoIndicatorsLoader.prototype.findAttributeValue = function(indicator, attribut
  * @param indicator The indicator 
  */
 AutoIndicatorsLoader.prototype.prepareParamIndicator = function(indicator) { 
-    indicator.queryParams.push("filter=dx:"+indicator.id);
+    indicator.queryParams.push("dimension=dx:"+indicator.id);
 };
 
 /**
@@ -196,9 +197,10 @@ AutoIndicatorsLoader.prototype.buildDataValues = function(indicator, rows) {
     var dataValues = rows.map( value =>{
         return {
             "dataElement":indicator.code,
-            "orgUnit": value[0],            
-            "period": value[1],            
-            "value": value[2]
+            "indicator": value[0],
+            "orgUnit": value[1],            
+            "period": value[2],
+            "value": value[3]
         }
     });
     
