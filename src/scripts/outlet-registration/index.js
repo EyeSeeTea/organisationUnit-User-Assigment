@@ -185,27 +185,56 @@ OutletRegistrator.prototype.postOrgUnit = function(event) {
     //Prepare orgUnit
     var newOrgUnit = this.createOrgUnitFromEvent(event);
     //Post orgunit  
+    console.log("La org. unit es")
+    console.log(newOrgUnit);
     this.postAndPatch(newOrgUnit, event);        
 };
+
+/**
+ * Returns the value of a given dataElement in one event
+ */
+
+OutletRegistrator.prototype.getValue = function(event, uidField) {
+	var foundField = event.dataValues.find(field => {
+		return field.dataElement === uidField;
+	});
+	
+	if (!foundField) {
+		return "";
+	}
+	
+	return foundField.value;
+}; 
 
 /**
  * Returns an orgUnit with every required field
  * @param event The event with the data
  */
 OutletRegistrator.prototype.createOrgUnitFromEvent = function(event) {
-    //TODO full fill
+
+	
+	//get outlet name
+	var outletName = this.getValue(event, this.conf.dataElements.name);	
+	//get outlet contact person
+	var outletContactPerson = this.getValue(event, this.conf.dataElements.contactPerson);	
+	//get outlet address
+	var outletAddress = this.getValue(event, this.conf.dataElements.address);
+	//get outlet phone number
+	var outletPhoneNumber = this.getValue(event, this.conf.dataElements.phoneNumber);
+	
+	
     return {
         code:"",
-        name:"",
-        shortName:"",
+        name:outletName,
+        shortName:outletName,
         featureType:"POINT",
         parent:{
             id:event.orgUnit
         },
-        address:"",
-        phoneNumber:"",
-        contactPerson:"",
-        coordinates:""     
+        address:outletAddress,
+        phoneNumber:outletPhoneNumber,
+        contactPerson:outletContactPerson,
+        coordinates:event.coordinate   
     }    
 };
 
