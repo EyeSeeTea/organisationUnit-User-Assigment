@@ -154,29 +154,17 @@ OutletRegistrator.prototype.findParentCode = function(event,organisationUnits) {
  * @param event The event 
  */
 OutletRegistrator.prototype.findLastAutoIncrement = function(event,organisationUnits) { 
-    //filter only those following the right sequence 'MM_AMTR[PARENTCODE]-'
+    var max = 0;
+
+	//filter only those following the right sequence 'MM_AMTR[PARENTCODE]-'
     var onlyAMTROrgUnits = organisationUnits.filter(organisationUnit => organisationUnit.code.indexOf("MM_AMTR"+event.parentCode+"-")!==-1);
-    if (onlyAMTROrgUnits.length>0) {
-    	var maxCounter = onlyAMTROrgUnits.reduce((max, organisationUnit) => {
-    		var currentValue = parseInt(organisationUnit.code.split("-")[1]);
-    		if(isNaN(currentValue)){
-    			return max;
-    		}
-    		//First time any value is a good one
-    		if(isNaN(max)){
-    			return currentValue;
-    		}
-    		//Return max
-    		return currentValue > max?currentValue:max;
-    	});    
-    	console.log ("Entro aqui");
-    	console.log("El maxCountrer",maxCounter);
-	}
-    
-    if(!maxCounter || isNaN(maxCounter)){
-        return 0;
+    for (var i=0;i<onlyAMTROrgUnits.length;i++) {
+    	var currentValue = parseInt(onlyAMTROrgUnits[i].code.split("-")[1]);
+    	if (!isNaN(currentValue)) {
+    		max = currentValue>max?currentValue:max;
+    	}
     }
-    return maxCounter;
+    return max;    
 };
 
 /**
@@ -188,8 +176,6 @@ OutletRegistrator.prototype.postOrgUnit = function(event) {
     //Prepare orgUnit
     var newOrgUnit = this.createOrgUnitFromEvent(event);
     //Post orgunit  
-    console.log("La org. unit es")
-    console.log(newOrgUnit);
     this.postAndPatch(newOrgUnit, event);        
 };
 
@@ -291,7 +277,7 @@ OutletRegistrator.prototype.createOrgUnitFromEvent = function(event) {
 OutletRegistrator.prototype.postAndPatch = function(newOrgUnit, event) {       
     //TODO Post orgunit
         //Patch alreadyCreated   
-	console.log("Voy a crear la org. unit");
+	console.log("Creating the org.unit ", newOrgUnit);
 	var postInfo = this.prepareOptions(this.endpoints.ORGUNIT);
 	postInfo.json = true;
 	postInfo.body = newOrgUnit;
