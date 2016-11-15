@@ -15,13 +15,19 @@ fs.readFile('config.json', 'utf8', function(err, conf) {
  * Class in charge of loading autoindicators turning them into datavalues.
  */
 function AutoIndicatorsLoader(conf) {
+
+	//get apiversion
+	var apiversion="";
+	console
+	if (typeof(conf.apiversion)!="undefined" && conf.apiversion!="") apiversion = "/"+conf.apiversion; 
+	
     //used endpoints
     this.endpoints = {
-        INDICATORGROUPS: conf.apiversion+"/indicatorGroups.json?filter=name:eq:AutoIndicators&fields=indicators[*]",
-        ATTRIBUTE_BY_NAME: conf.apiversion+"/attributes?fields=id&filter=name:eq:",
-        DATASETS: conf.apiversion+"/dataSets/UID.json?fields=periodType",
-        ANALYTICS: conf.apiversion+"/analytics.json?displayProperty=NAME&skipMeta=true&",
-        DATAVALUESETS: conf.apiversion+"/dataValueSets"
+        INDICATORGROUPS: apiversion+"/indicatorGroups.json?filter=name:eq:AutoIndicators&fields=indicators[*]",
+        ATTRIBUTE_BY_NAME: apiversion+"/attributes?fields=id&filter=name:eq:",
+        DATASETS: apiversion+"/dataSets/UID.json?fields=periodType",
+        ANALYTICS: apiversion+"/analytics.json?displayProperty=NAME&skipMeta=true&",
+        DATAVALUESETS: apiversion+"/dataValueSets"
     };
     
     //rest config
