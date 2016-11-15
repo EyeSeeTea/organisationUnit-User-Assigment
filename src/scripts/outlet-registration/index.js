@@ -154,19 +154,21 @@ OutletRegistrator.prototype.findParentCode = function(event,organisationUnits) {
  */
 OutletRegistrator.prototype.findLastAutoIncrement = function(event,organisationUnits) { 
     //filter only those following the right sequence 'MM_AMTR[PARENTCODE]-'
-    var onlyAMTROrgUnits = organisationUnits.filter(organisationUnit => organisationUnit.code.indexOf("MM_AMTR"+event.parentCode+"-")!==-1);   
-    var maxCounter = onlyAMTROrgUnits.reduce((max, organisationUnit) => {
-        var currentValue = parseInt(organisationUnit.code.split("-")[1]);
-        if(isNaN(currentValue)){
-            return max;
-        }
-        //First time any value is a good one
-        if(isNaN(max)){
-            return currentValue;
-        }
-        //Return max
-        return currentValue > max?currentValue:max;
-    });    
+    var onlyAMTROrgUnits = organisationUnits.filter(organisationUnit => organisationUnit.code.indexOf("MM_AMTR"+event.parentCode+"-")!==-1);
+    if (onlyAMTROrgUnits.length>0) {
+    	var maxCounter = onlyAMTROrgUnits.reduce((max, organisationUnit) => {
+    		var currentValue = parseInt(organisationUnit.code.split("-")[1]);
+    		if(isNaN(currentValue)){
+    			return max;
+    		}
+    		//First time any value is a good one
+    		if(isNaN(max)){
+    			return currentValue;
+    		}
+    		//Return max
+    		return currentValue > max?currentValue:max;
+    	});    
+	}
     
     if(!maxCounter || isNaN(maxCounter)){
         return 0;
