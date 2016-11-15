@@ -15,12 +15,18 @@ fs.readFile('config.json', 'utf8', function(err, conf) {
  * Class in charge of loading autoindicators turning them into datavalues.
  */
 function OutletRegistrator(conf) {
+	
+	//get api version
+	var apiversion="";
+	
+	if (typeof(conf.apiversion)!="undefined" && conf.apiversion!="") apiversion="/"+conf.apiversion;
+	
     //used endpoints
     this.endpoints = {
         
-        EVENTS: "/24/events.json?orgUnit=[ROOT]&ouMode=DESCENDANTS&program=[PROGRAM]&startDate=",
-        ORGUNITS:"/24/organisationUnits/[PARENT].json?includeChildren=true",
-        DATAVALUESETS: "/24/dataValueSets" 
+        EVENTS: apiversion+"/events.json?orgUnit=[ROOT]&ouMode=DESCENDANTS&program=[PROGRAM]&startDate=",
+        ORGUNITS: apiversion+"/organisationUnits/[PARENT].json?includeChildren=true",
+        DATAVALUESETS: apiversion+"/dataValueSets" 
     };
 
     //rest config
