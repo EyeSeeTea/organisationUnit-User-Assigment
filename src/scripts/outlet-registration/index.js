@@ -26,7 +26,8 @@ function OutletRegistrator(conf) {
         
         EVENTS: apiversion+"/events.json?orgUnit=[ROOT]&ouMode=DESCENDANTS&program=[PROGRAM]&startDate=",
         ORGUNITS: apiversion+"/organisationUnits/[PARENT].json?includeChildren=true",
-        DATAVALUESETS: apiversion+"/dataValueSets" 
+        DATAVALUESETS: apiversion+"/dataValueSets",
+        ORGUNIT: apiversion+"/organisationUnits/"
     };
 
     //rest config
@@ -168,6 +169,8 @@ OutletRegistrator.prototype.findLastAutoIncrement = function(event,organisationU
     		//Return max
     		return currentValue > max?currentValue:max;
     	});    
+    	console.log ("Entro aqui");
+    	console.log("El maxCountrer",maxCounter);
 	}
     
     if(!maxCounter || isNaN(maxCounter)){
@@ -210,7 +213,6 @@ OutletRegistrator.prototype.getValue = function(event, uidField) {
  * Returns a string with outlet code
  * {AMTR}{ParentCode}{-}{Increment}
  */
-
 OutletRegistrator.prototype.createOrgUnitCode = function(parentCode,autoIncrement) {
 	if (autoIncrement>0 && autoIncrement<10) automIncrement = "0"+autoIncrement;
 	return "AMTR"+parentCode+"-"+autoIncrement;
@@ -228,6 +230,23 @@ OutletRegistrator.prototype.formOutletCompleteName = function(name, code) {
  */
 OutletRegistrator.prototype.addCodePrefix = function(code){
 	return "MM_" + code;
+};
+
+/**
+ * DHIS2 format for coordinates [longitude,latitude]
+ */
+OutletRegistrator.prototype.setupCoordiantes = function(coord) {
+	coordinates = [coord.longitude, coord.latitude];
+	return coordinates;
+};
+
+/**
+ * The opening date of the org. unit
+ * It should the date field of the eventDate
+ */
+OutletRegistrator.prototype.getOpeningDate = function(eventDate) {
+	var openingDate = eventDate.split('T')[0];
+	return openingDate;
 };
 
 
@@ -253,6 +272,7 @@ OutletRegistrator.prototype.createOrgUnitFromEvent = function(event) {
         code:this.addCodePrefix(outletCode),
         name:this.formOutletCompleteName(outletName, outletCode),
         shortName:outletName,
+        openingDate:this.getOpeningDate(event.eventDate),
         featureType:"POINT",
         parent:{
             id:event.orgUnit
@@ -260,7 +280,7 @@ OutletRegistrator.prototype.createOrgUnitFromEvent = function(event) {
         address:outletAddress,
         phoneNumber:outletPhoneNumber,
         contactPerson:outletContactPerson,
-        coordinates:event.coordinate   
+        coordinates:JSON.stringify(this.setupCoordiantes(event.coordinate))   
     }    
 };
 
@@ -271,6 +291,19 @@ OutletRegistrator.prototype.createOrgUnitFromEvent = function(event) {
 OutletRegistrator.prototype.postAndPatch = function(newOrgUnit, event) {       
     //TODO Post orgunit
         //Patch alreadyCreated   
+	console.log("Voy a crear la org. unit");
+	var postInfo = this.prepareOptions(this.endpoints.ORGUNIT);
+	postInfo.json = true;
+	postInfo.body = newOrgUnit;
+	request.post(postInfo, function(error, response, body){
+		if (error) {
+			console.error("Error creating the org. unit: ", error);
+			return;
+		}
+		console.log("SUCCESS");
+		console.log(JSON.stringify(body));
+	});
+	
 };
 
 /**
