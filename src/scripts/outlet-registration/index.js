@@ -204,17 +204,43 @@ OutletRegistrator.prototype.getValue = function(event, uidField) {
 	}
 	
 	return foundField.value;
-}; 
+};
+
+/**
+ * Returns a string with outlet code
+ * {AMTR}{ParentCode}{-}{Increment}
+ */
+
+OutletRegistrator.prototype.createOrgUnitCode = function(parentCode,autoIncrement) {
+	if (autoIncrement>0 && autoIncrement<10) automIncrement = "0"+autoIncrement;
+	return "AMTR"+parentCode+"-"+autoIncrement;
+};
+
+/**
+ * Complete name is {outletName}{ (}{code}{)}
+ */
+OutletRegistrator.prototype.formOutletCompleteName = function(name, code) {
+	return name + " (" + code + ")";
+};
+
+/**
+ * The prefix for Myanmar is MM
+ */
+OutletRegistrator.prototype.addCodePrefix = function(code){
+	return "MM_" + code;
+};
+
 
 /**
  * Returns an orgUnit with every required field
  * @param event The event with the data
  */
 OutletRegistrator.prototype.createOrgUnitFromEvent = function(event) {
-
 	
 	//get outlet name
-	var outletName = this.getValue(event, this.conf.dataElements.name);	
+	var outletName = this.getValue(event, this.conf.dataElements.name);
+	//get outlet code
+	var outletCode = this.createOrgUnitCode(event.parentCode, event.autoIncrement);
 	//get outlet contact person
 	var outletContactPerson = this.getValue(event, this.conf.dataElements.contactPerson);	
 	//get outlet address
@@ -224,8 +250,8 @@ OutletRegistrator.prototype.createOrgUnitFromEvent = function(event) {
 	
 	
     return {
-        code:"",
-        name:outletName,
+        code:this.addCodePrefix(outletCode),
+        name:this.formOutletCompleteName(outletName, outletCode),
         shortName:outletName,
         featureType:"POINT",
         parent:{
