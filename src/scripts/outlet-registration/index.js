@@ -243,6 +243,7 @@ OutletRegistrator.prototype.getOpeningDate = function(eventDate) {
  */
 OutletRegistrator.prototype.createOrgUnitFromEvent = function(event) {
 	
+	var newOu = {};
 	//get outlet name
 	var outletName = this.getValue(event, this.conf.dataElements.name);
 	//get outlet code
@@ -253,9 +254,28 @@ OutletRegistrator.prototype.createOrgUnitFromEvent = function(event) {
 	var outletAddress = this.getValue(event, this.conf.dataElements.address);
 	//get outlet phone number
 	var outletPhoneNumber = this.getValue(event, this.conf.dataElements.phoneNumber);
+
+    
+    newOu.code=this.addCodePrefix(outletCode);
+    newOu.name=this.formOutletCompleteName(outletName, outletCode);
+    newOu.shortName=outletName;
+    newOu.openingDate=this.getOpeningDate(event.eventDate);
+    newOu.featureType="POINT";
+    newOu.parent={
+        id:event.orgUnit
+    };
+    newOu.address=outletAddress;
+    newOu.phoneNumber=outletPhoneNumber;
+    newOu.contactPerson=outletContactPerson;
+  //(0,0) means the coordinates have not been pushed from android
+    if (event.coordinate.longitude!=0 ||  event.coordinate.latitude!=0)
+    	newOu.coordinates=JSON.stringify(this.setupCoordiantes(event.coordinate));
+    
+    return newOu;
+}    
+
 	
-	
-    return {
+    /*return {
         code:this.addCodePrefix(outletCode),
         name:this.formOutletCompleteName(outletName, outletCode),
         shortName:outletName,
@@ -267,9 +287,9 @@ OutletRegistrator.prototype.createOrgUnitFromEvent = function(event) {
         address:outletAddress,
         phoneNumber:outletPhoneNumber,
         contactPerson:outletContactPerson,
-        coordinates:JSON.stringify(this.setupCoordiantes(event.coordinate))   
-    }    
-};
+        coordinates:JSON.stringify(this.setupCoordiantes(event.coordinate))
+    } */   
+
 
 /**
  * Returns the has been already imported or not
