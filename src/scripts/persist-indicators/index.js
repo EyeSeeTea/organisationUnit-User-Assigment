@@ -17,30 +17,26 @@ fs.readFile('config.json', 'utf8', function(err, conf) {
 function AutoIndicatorsLoader(conf) {
 
 	//get apiversion
-	var apiversion="";
-	console
-	if (typeof(conf.apiversion)!="undefined" && conf.apiversion!="") apiversion = "/"+conf.apiversion; 
-	
-    //used endpoints
-    this.endpoints = {
-        INDICATORGROUPS: apiversion+"/indicatorGroups.json?filter=name:eq:AutoIndicators&fields=indicators[*]",
-        ATTRIBUTE_BY_NAME: apiversion+"/attributes?fields=id&filter=name:eq:",
-        DATASETS: apiversion+"/dataSets/UID.json?fields=periodType",
-        ANALYTICS: apiversion+"/analytics.json?displayProperty=NAME&skipMeta=true&",
-        DATAVALUESETS: apiversion+"/dataValueSets"
-    };
-    
-    //rest config
-    this.conf = conf;
+	var apiVersion="";
+	if (typeof(conf.apiVersion)!="undefined" && conf.apiVersion!="") apiVersion = "/"+conf.apiVersion;	
 
+	//used endpoints
+    this.endpoints = {
+        INDICATORGROUPS: apiVersion+"/indicatorGroups.json?filter=name:eq:AutoIndicators&fields=indicators[*]",
+        ATTRIBUTE_BY_NAME: apiVersion+"/attributes?fields=id&filter=name:eq:",
+        DATASETS: apiVersion+"/dataSets/UID.json?fields=periodType",
+        ANALYTICS: apiVersion+"/analytics.json?displayProperty=NAME&skipMeta=true&",
+        DATAVALUESETS: apiVersion+"/dataValueSets"
+    }; 
+    //rest config
+    this.conf = conf
     //common auth, endpoint config
     this.requestOptions = {
         headers: {
             authorization: 'Basic ' + this.conf.auth,
         },
         url: this.conf.protocol + "://" + this.conf.url
-    }
-        
+    }     
     console.log("\nConfig:\n", JSON.stringify(this.conf, null, "\t"));
 };
 
