@@ -15,7 +15,7 @@ fs.readFile('config.json', 'utf8', function(err, conf) {
  * Class in charge of loading autoindicators turning them into datavalues.
  */
 function AutoIndicatorsLoader(conf) {
-	//used endpoints
+    //used endpoints
     this.endpoints = {
         INDICATORGROUPS: "/indicatorGroups.json?filter=name:eq:AutoIndicators&fields=indicators[*]",
         ATTRIBUTE_BY_NAME: "/attributes?fields=id&filter=name:eq:",
