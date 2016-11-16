@@ -31,7 +31,9 @@ function OutletRegistrator(conf) {
         ORGUNITGROUPORGUNIT: apiVersion+"/organisationUnitGroups/[UIDGROUP]/organisationUnits/[UIDOU]",
         ORGUNITDATASET: apiVersion+"/organisationUnits/[UIDOU]/dataSets/[UIDDATASET]",
         ORGUNITPROGRAM: apiVersion+"/organisationUnits/[UIDOU]/programs/[UIDPROGRAM]",
-        OUTLETTYPE: apiVersion+"/organisationUnitGroups?filter=name:eq:[OUTLETTYPE]"
+        OUTLETTYPE: apiVersion+"/organisationUnitGroups?filter=name:eq:[OUTLETTYPE]",
+        USERSFILTER: apiVersion+"/userCredentials?fields=id,username,userInfo&filter=username:eq:[USERNAME]",
+        USERORGUNITS: apiVersion+"/users/[USER]/organisationUnits/[UIDOU]"
     };
     
     //This is the prefix of the Orgunit group names for Outlet Type
@@ -251,7 +253,7 @@ OutletRegistrator.prototype.getOpeningDate = function(eventDate) {
  * @param event The event with the data
  */
 OutletRegistrator.prototype.createOrgUnitFromEvent = function(event) {
-	
+
 	var newOu = {};
 	//get outlet name
 	var outletName = this.getValue(event, this.conf.dataElements.name);
@@ -294,7 +296,7 @@ OutletRegistrator.prototype.postAndPatch = function(newOrgUnit, event) {
 	var postInfo = this.prepareOptions(this.endpoints.ORGUNIT);
 	postInfo.json = true;
 	postInfo.body = newOrgUnit;
-
+	
 	request.post(postInfo, function(error, response, body){
 		if (error) {
 			console.error("Error creating the org. unit: ", error);
@@ -304,7 +306,8 @@ OutletRegistrator.prototype.postAndPatch = function(newOrgUnit, event) {
 		if (body.status == "OK") {
 			console.log("Created ", newOrgUnit, "with uid ", body.response.uid);
 			_this.decorateOrgUnit(body.response.uid);
-			_this.addOutletType(body.response.uid,_this.getValue(event, _this.conf.dataElements.outletType));			
+			_this.addOutletType(body.response.uid,_this.getValue(event, _this.conf.dataElements.outletType));
+			_this.addUser(body.response.uid,event.storedBy);
 			return;
 		}
 		console.log("Org Unit has not been created");
@@ -393,7 +396,6 @@ OutletRegistrator.prototype.addOutletType = function(newOrgUnitId, outletTypeNam
 	var completeOutletType = this.outletTypePrefix + outletTypeName;
 	var requestData = this.prepareOptions(this.endpoints.OUTLETTYPE);
 	requestData.url = requestData.url.replace("[OUTLETTYPE]", completeOutletType);
-	console.log(requestData.url)
 	requestData.json = true;
 	request(requestData, function(error, response, body){
 		if (error) {
@@ -421,6 +423,48 @@ OutletRegistrator.prototype.setupOutletType = function(newOrgUnitId, outletType)
 	postInfo.json = true;
 	request.post(postInfo, function(error, response, body){
 		if (error) {console.error("Error adding the orgunit to the outlet type ",error)}
+		console.log(JSON.stringify(body));
+	});
+};
+
+/**
+ * Look for the specific Org Unit Group based on the outletTypeName
+ * If found, it calls the method to add the org. unit to the orgunit group
+ */
+OutletRegistrator.prototype.addUser = function(newOrgUnitId, userName) {
+	var _this = this;
+	
+	console.log("Adding user ", userName, " to the org. unit ", newOrgUnitId);
+	var requestData = this.prepareOptions(this.endpoints.USERSFILTER);
+	requestData.url = requestData.url.replace("[USERNAME]", userName);
+	console.log(requestData.url);
+	requestData.json = true;
+	request(requestData, function(error, response, body){
+		if (error) {
+			console.error("Error getting the users ",error);
+			return;	
+		}
+		if (body.userCredentials.length!=1) {
+			console.log("User not found in the server")
+			return;
+		}
+		//get the outletType
+		var user = body.userCredentials[0];
+		_this.setupUser(newOrgUnitId,user);
+		
+	});
+};
+
+/**
+ * Add the new org. unit to the an OutletType org. unit group
+ */
+OutletRegistrator.prototype.setupUser = function(newOrgUnitId, user) {
+	var postInfo = this.prepareOptions(this.endpoints.USERORGUNITS);
+	postInfo.url = postInfo.url.replace("[UIDOU]", newOrgUnitId);
+	postInfo.url = postInfo.url.replace("[USER]",user.userInfo.id);
+	postInfo.json = true;
+	request.post(postInfo, function(error, response, body){
+		if (error) {console.error("Error adding the orgunit to the user ",error)}
 		console.log(JSON.stringify(body));
 	});
 };
