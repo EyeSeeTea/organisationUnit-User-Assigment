@@ -30,8 +30,14 @@ function OutletRegistrator(conf) {
         ORGUNIT: apiVersion+"/organisationUnits/",
         ORGUNITGROUPORGUNIT: apiVersion+"/organisationUnitGroups/[UIDGROUP]/organisationUnits/[UIDOU]",
         ORGUNITDATASET: apiVersion+"/organisationUnits/[UIDOU]/dataSets/[UIDDATASET]",
-        ORGUNITPROGRAM: apiVersion+"/organisationUnits/[UIDOU]/programs/[UIDPROGRAM]"
+        ORGUNITPROGRAM: apiVersion+"/organisationUnits/[UIDOU]/programs/[UIDPROGRAM]",
+        OUTLETTYPE: apiVersion+"/organisationUnitGroups?filter=name:eq:[OUTLETTYPE]"
     };
+    
+    //This is the prefix of the Orgunit group names for Outlet Type
+    this.outletTypePrefix = "MM Type - ";
+    //This is the prefix for Myanmar
+    this.myanmarPrefix = "MM_"
 
     //rest config
     this.conf = conf;
@@ -257,10 +263,9 @@ OutletRegistrator.prototype.createOrgUnitFromEvent = function(event) {
 	var outletAddress = this.getValue(event, this.conf.dataElements.address);
 	//get outlet phone number
 	var outletPhoneNumber = this.getValue(event, this.conf.dataElements.phoneNumber);
-
     
-    newOu.code=this.addCodePrefix(outletCode);
-    newOu.name=this.formOutletCompleteName(outletName, outletCode);
+    newOu.code=this.myanmarPrefix+outletCode;
+    newOu.name=outletName + " (" + outletCode + ")";
     newOu.shortName=outletName;
     newOu.openingDate=this.getOpeningDate(event.eventDate);
     newOu.featureType="POINT";
@@ -299,6 +304,7 @@ OutletRegistrator.prototype.postAndPatch = function(newOrgUnit, event) {
 		if (body.status == "OK") {
 			console.log("Created ", newOrgUnit, "with uid ", body.response.uid);
 			_this.decorateOrgUnit(body.response.uid);
+			_this.addOutletType(body.response.uid,_this.getValue(event, _this.conf.dataElements.outletType));			
 			return;
 		}
 		console.log("Org Unit has not been created");
@@ -374,6 +380,49 @@ OutletRegistrator.prototype.activateDataSets = function(newOrgUnitId) {
 			console.log(JSON.stringify(body));
 		});
 	});	
+};
+
+
+/**
+ * Look for the specific Org Unit Group based on the outletTypeName
+ * If found, it calls the method to add the org. unit to the orgunit group
+ */
+OutletRegistrator.prototype.addOutletType = function(newOrgUnitId, outletTypeName) {
+	var _this = this;
+	
+	var completeOutletType = this.outletTypePrefix + outletTypeName;
+	var requestData = this.prepareOptions(this.endpoints.OUTLETTYPE);
+	requestData.url = requestData.url.replace("[OUTLETTYPE]", completeOutletType);
+	console.log(requestData.url)
+	requestData.json = true;
+	request(requestData, function(error, response, body){
+		if (error) {
+			console.error("Error getting the outlet type ",error);
+			return;	
+		}
+		if (body.organisationUnitGroups.length!=1) {
+			console.log("Outlet type not found in the server")
+			return;
+		}
+		//get the outletType.
+		var outletType = body.organisationUnitGroups[0];
+		_this.setupOutletType(newOrgUnitId,outletType);
+		
+	});
+};
+
+/**
+ * Add the new org. unit to the an OutletType org. unit group
+ */
+OutletRegistrator.prototype.setupOutletType = function(newOrgUnitId, outletType) {
+	var postInfo = this.prepareOptions(this.endpoints.ORGUNITGROUPORGUNIT);
+	postInfo.url = postInfo.url.replace("[UIDOU]", newOrgUnitId);
+	postInfo.url = postInfo.url.replace("[UIDGROUP]",outletType.id);
+	postInfo.json = true;
+	request.post(postInfo, function(error, response, body){
+		if (error) {console.error("Error adding the orgunit to the outlet type ",error)}
+		console.log(JSON.stringify(body));
+	});
 };
 
 /**
