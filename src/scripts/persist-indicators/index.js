@@ -15,18 +15,13 @@ fs.readFile('config.json', 'utf8', function(err, conf) {
  * Class in charge of loading autoindicators turning them into datavalues.
  */
 function AutoIndicatorsLoader(conf) {
-
-    //get apiversion
-    var apiVersion="";
-    if (typeof(conf.apiVersion)!="undefined" && conf.apiVersion!="") apiVersion = "/"+conf.apiVersion;	
-
 	//used endpoints
     this.endpoints = {
-        INDICATORGROUPS: apiVersion+"/indicatorGroups.json?filter=name:eq:AutoIndicators&fields=indicators[*]",
-        ATTRIBUTE_BY_NAME: apiVersion+"/attributes?fields=id&filter=name:eq:",
-        DATASETS: apiVersion+"/dataSets/UID.json?fields=periodType",
-        ANALYTICS: apiVersion+"/analytics.json?displayProperty=NAME&skipMeta=true&",
-        DATAVALUESETS: apiVersion+"/dataValueSets"
+        INDICATORGROUPS: "/indicatorGroups.json?filter=name:eq:AutoIndicators&fields=indicators[*]",
+        ATTRIBUTE_BY_NAME: "/attributes?fields=id&filter=name:eq:",
+        DATASETS: "/dataSets/UID.json?fields=periodType",
+        ANALYTICS: "/analytics.json?displayProperty=NAME&skipMeta=true&",
+        DATAVALUESETS: "/dataValueSets"
     }; 
     //rest config
     this.conf = conf
@@ -35,7 +30,7 @@ function AutoIndicatorsLoader(conf) {
         headers: {
             authorization: 'Basic ' + this.conf.auth,
         },
-        url: this.conf.protocol + "://" + this.conf.url
+        url: this.conf.protocol + "://" + this.conf.url + ((this.conf.apiVersion == "")?"":"/" +this.conf.apiVersion)
     }
     console.log("\nConfig:\n", JSON.stringify(this.conf, null, "\t"));
 };
