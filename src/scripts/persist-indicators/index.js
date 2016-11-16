@@ -16,9 +16,9 @@ fs.readFile('config.json', 'utf8', function(err, conf) {
  */
 function AutoIndicatorsLoader(conf) {
 
-	//get apiversion
-	var apiVersion="";
-	if (typeof(conf.apiVersion)!="undefined" && conf.apiVersion!="") apiVersion = "/"+conf.apiVersion;	
+    //get apiversion
+    var apiVersion="";
+    if (typeof(conf.apiVersion)!="undefined" && conf.apiVersion!="") apiVersion = "/"+conf.apiVersion;	
 
 	//used endpoints
     this.endpoints = {
@@ -36,7 +36,7 @@ function AutoIndicatorsLoader(conf) {
             authorization: 'Basic ' + this.conf.auth,
         },
         url: this.conf.protocol + "://" + this.conf.url
-    }     
+    }
     console.log("\nConfig:\n", JSON.stringify(this.conf, null, "\t"));
 };
 
