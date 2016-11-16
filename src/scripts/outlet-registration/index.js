@@ -17,17 +17,17 @@ fs.readFile('config.json', 'utf8', function(err, conf) {
 function OutletRegistrator(conf) {
 	
 	//get api version
-	var apiversion="";
+	var apiVersion="";
 	
-	if (typeof(conf.apiversion)!="undefined" && conf.apiversion!="") apiversion="/"+conf.apiversion;
+	if (typeof(conf.apiVersion)!="undefined" && conf.apiVersion!="") apiVersion="/"+conf.apiVersion;
 	
     //used endpoints
     this.endpoints = {
         
-        EVENTS: apiversion+"/events.json?orgUnit=[ROOT]&ouMode=DESCENDANTS&program=[PROGRAM]&startDate=",
-        ORGUNITS: apiversion+"/organisationUnits/[PARENT].json?includeChildren=true",
-        DATAVALUESETS: apiversion+"/dataValueSets",
-        ORGUNIT: apiversion+"/organisationUnits/"
+        EVENTS: apiVersion+"/events.json?orgUnit=[ROOT]&ouMode=DESCENDANTS&program=[PROGRAM]&startDate=",
+        ORGUNITS: apiVersion+"/organisationUnits/[PARENT].json?includeChildren=true",
+        DATAVALUESETS: apiVersion+"/dataValueSets",
+        ORGUNIT: apiVersion+"/organisationUnits/"
     };
 
     //rest config
@@ -155,15 +155,16 @@ OutletRegistrator.prototype.findParentCode = function(event,organisationUnits) {
  */
 OutletRegistrator.prototype.findLastAutoIncrement = function(event,organisationUnits) { 
     var max = 0;
-
+    
 	//filter only those following the right sequence 'MM_AMTR[PARENTCODE]-'
     var onlyAMTROrgUnits = organisationUnits.filter(organisationUnit => organisationUnit.code.indexOf("MM_AMTR"+event.parentCode+"-")!==-1);
-    for (var i=0;i<onlyAMTROrgUnits.length;i++) {
-    	var currentValue = parseInt(onlyAMTROrgUnits[i].code.split("-")[1]);
+    onlyAMTROrgUnits.forEach(function(AMTROrgUnit){
+    	var currentValue = parseInt(AMTROrgUnit.code.split("-")[1]);
     	if (!isNaN(currentValue)) {
     		max = currentValue>max?currentValue:max;
-    	}
-    }
+    	}    
+    });
+
     return max;    
 };
 

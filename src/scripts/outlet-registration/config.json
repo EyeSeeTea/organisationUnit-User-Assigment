@@ -2,10 +2,9 @@
     "auth": "YXF1aW50YW5hOkFxdWludGFuYTIwMTY=",
     "protocol": "http",
     "url": "localhost:8080/api",
-    "apiversion":"/24",
     "rootOrgUnit":"RZjIN6Adcdr",
     "program":"hVSZs58OP0J",
-    "apiversion": "24",
+    "apiVersion": "24",
     "fromDate":"-30",
     "dataElements":{
         "address":"S4KnuSGGSH0",
