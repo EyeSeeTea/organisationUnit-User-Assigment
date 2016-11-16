@@ -27,7 +27,10 @@ function OutletRegistrator(conf) {
         EVENTS: apiVersion+"/events.json?orgUnit=[ROOT]&ouMode=DESCENDANTS&program=[PROGRAM]&startDate=",
         ORGUNITS: apiVersion+"/organisationUnits/[PARENT].json?includeChildren=true",
         DATAVALUESETS: apiVersion+"/dataValueSets",
-        ORGUNIT: apiVersion+"/organisationUnits/"
+        ORGUNIT: apiVersion+"/organisationUnits/",
+        ORGUNITGROUPORGUNIT: apiVersion+"/organisationUnitGroups/[UIDGROUP]/organisationUnits/[UIDOU]",
+        ORGUNITDATASET: apiVersion+"/organisationUnits/[UIDOU]/dataSets/[UIDDATASET]",
+        ORGUNITPROGRAM: apiVersion+"/organisationUnits/[UIDOU]/programs/[UIDPROGRAM]"
     };
 
     //rest config
@@ -267,29 +270,13 @@ OutletRegistrator.prototype.createOrgUnitFromEvent = function(event) {
     newOu.address=outletAddress;
     newOu.phoneNumber=outletPhoneNumber;
     newOu.contactPerson=outletContactPerson;
-  //(0,0) means the coordinates have not been pushed from android
+    //(0,0) means the coordinates have not been pushed from android
     if (event.coordinate.longitude!=0 ||  event.coordinate.latitude!=0)
     	newOu.coordinates=JSON.stringify(this.setupCoordiantes(event.coordinate));
     
     return newOu;
-}    
-
-	
-    /*return {
-        code:this.addCodePrefix(outletCode),
-        name:this.formOutletCompleteName(outletName, outletCode),
-        shortName:outletName,
-        openingDate:this.getOpeningDate(event.eventDate),
-        featureType:"POINT",
-        parent:{
-            id:event.orgUnit
-        },
-        address:outletAddress,
-        phoneNumber:outletPhoneNumber,
-        contactPerson:outletContactPerson,
-        coordinates:JSON.stringify(this.setupCoordiantes(event.coordinate))
-    } */   
-
+} 
+  
 
 /**
  * Returns the has been already imported or not
@@ -298,19 +285,95 @@ OutletRegistrator.prototype.createOrgUnitFromEvent = function(event) {
 OutletRegistrator.prototype.postAndPatch = function(newOrgUnit, event) {       
     //TODO Post orgunit
         //Patch alreadyCreated   
-	console.log("Creating the org.unit ", newOrgUnit);
+	var _this = this;
 	var postInfo = this.prepareOptions(this.endpoints.ORGUNIT);
 	postInfo.json = true;
 	postInfo.body = newOrgUnit;
+
 	request.post(postInfo, function(error, response, body){
 		if (error) {
 			console.error("Error creating the org. unit: ", error);
 			return;
 		}
-		console.log("SUCCESS");
+		//If the import was successful
+		if (body.status == "OK") {
+			console.log("Created ", newOrgUnit, "with uid ", body.response.uid);
+			_this.decorateOrgUnit(body.response.uid);
+			return;
+		}
+		console.log("Org Unit has not been created");
 		console.log(JSON.stringify(body));
 	});
 	
+};
+
+/**
+ * Decorates the org. unit with dataSets, org. unit groups, and programs
+ */
+OutletRegistrator.prototype.decorateOrgUnit = function(newOrgUnitId) {
+	//Activate datasets
+	this.activateDataSets(newOrgUnitId);
+	//Activate programs
+	this.activatePrograms(newOrgUnitId);
+	//Add to OrgUnitGroups
+	this.addToOrgUnitGroup(newOrgUnitId);
+};
+
+
+/***
+ * Activate programs for a particular OrgUnit
+ */
+OutletRegistrator.prototype.addToOrgUnitGroup = function(newOrgUnitId) {
+	var _this=this;
+	
+	this.conf.organisationUnitGroups.forEach(function(ougId){
+		var postInfo = _this.prepareOptions(_this.endpoints.ORGUNITGROUPORGUNIT);
+		postInfo.url = postInfo.url.replace("[UIDGROUP]",ougId);
+		postInfo.url = postInfo.url.replace("[UIDOU]", newOrgUnitId);
+		postInfo.json = true;
+		request.post(postInfo, function(error, response, body){
+			if (error) {console.error("Error adding the org. unit to the org. unit group ",error)}
+			console.log(JSON.stringify(body));
+		});
+	});
+};
+
+
+/***
+ * Activate programs for a particular OrgUnit
+ */
+OutletRegistrator.prototype.activatePrograms = function(newOrgUnitId) {				
+	var _this=this;
+	this.conf.programs.forEach(function(programId){
+		var postInfo = _this.prepareOptions(_this.endpoints.ORGUNITPROGRAM);
+		postInfo.url = postInfo.url.replace("[UIDOU]", newOrgUnitId);
+		postInfo.url = postInfo.url.replace("[UIDPROGRAM]",programId);
+		postInfo.json = true;
+		
+		request.post(postInfo, function(error, response, body){
+			if (error) {console.error("Error activating program ",error)}
+			console.log(JSON.stringify(body));
+		});
+	});
+};
+
+
+/***
+ * Activate datasets for a particular OrgUnit
+ */
+OutletRegistrator.prototype.activateDataSets = function(newOrgUnitId) {
+	var _this=this;
+	
+	this.conf.dataSets.forEach(function(dataSetId){
+		var postInfo = _this.prepareOptions(_this.endpoints.ORGUNITDATASET);
+		postInfo.url = postInfo.url.replace("[UIDOU]", newOrgUnitId);
+		postInfo.url = postInfo.url.replace("[UIDDATASET]",dataSetId);
+		postInfo.json = true;
+		request.post(postInfo, function(error, response, body){
+			if (error) {console.error("Error activating dataset ",error)}
+			console.log(JSON.stringify(body));
+		});
+	});	
 };
 
 /**
