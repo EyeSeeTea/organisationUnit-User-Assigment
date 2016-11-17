@@ -77,13 +77,35 @@ OutletRegistrator.prototype.loadLastEvents = function() {
     request(requestData, function(error, response, body) {
         _this.events = JSON.parse(body).events;
         console.log("Found " + _this.events.length + " events");
-
-         //TODO This process should be done via 'events' simulating a lock
-        //Process every indicator
-        _this.events.forEach(function(event) {
-            _this.processOrgUnit(event);
-        });
+        _this.events = _this.events.filter(event => _this.isAlreadyImported(event)==false);
+        console.log("Org. Units to import ", _this.events.length);
+                
+        if (_this.events.length == 0) {
+        	console.log ("No org. units to import");
+        	return;
+        }
+        
+        _this.WaterfallPattern(_this.events, function(event) { _this.processOrgUnit(event);},
+         function (){
+        	console.log("Done!!!")
+         });
+        
     });
+};
+
+OutletRegistrator.prototype.WaterfallPattern = function(events, action, callback) {
+	var nextEventIndex = 0;
+	
+	OutletRegistrator.prototype.nextEvent = function() {
+		nextEventIndex++;
+		
+		if (nextEventIndex === events.length)
+			callback();
+		else
+			action(events[nextEventIndex]);
+	}
+	
+	action(events[0]);
 };
 
 /**
@@ -103,10 +125,10 @@ OutletRegistrator.prototype.prepareEventsRequest = function(requestData) {
  */
 OutletRegistrator.prototype.processOrgUnit = function(event) {    
     //Skip already imported
-    if (this.isAlreadyImported(event)){
+    /*if (this.isAlreadyImported(event)){
         console.warn("Skipping event "+event.event+", already imported");
         return;
-    }
+    }*/
     this.buildOrgUnit(event);
 };
 
@@ -306,6 +328,7 @@ OutletRegistrator.prototype.postAndPatch = function(newOrgUnit, event) {
 		//If the import was successful
 		if (body.status == "OK") {
 			console.log("Created ", newOrgUnit, "with uid ", body.response.uid);
+			_this.nextEvent();
 			_this.decorateOrgUnit(body.response.uid);
 			_this.addOutletType(body.response.uid,_this.getValue(event, _this.conf.dataElements.outletType));
 			_this.addUser(body.response.uid,event.storedBy);
