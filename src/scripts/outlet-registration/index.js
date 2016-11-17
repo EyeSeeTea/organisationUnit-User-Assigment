@@ -85,7 +85,7 @@ OutletRegistrator.prototype.loadLastEvents = function() {
         	return;
         }
         
-        _this.WaterfallPattern(_this.events, function(event) { _this.processOrgUnit(event);},
+        _this.WaterfallPattern(_this.events, function(event) { _this.buildOrgUnit(event);},
          function (){
         	console.log("Done!!!")
          });
@@ -118,19 +118,6 @@ OutletRegistrator.prototype.prepareEventsRequest = function(requestData) {
     requestData.url =  requestData.url + periods.moveAndFormatDay(this.conf.fromDate);
     return requestData;
 }
-
-/**
- * Creates an orgunit for the given event if 'alreadyCreated' false
- * @param event The event that will be converted into an orgunit
- */
-OutletRegistrator.prototype.processOrgUnit = function(event) {    
-    //Skip already imported
-    /*if (this.isAlreadyImported(event)){
-        console.warn("Skipping event "+event.event+", already imported");
-        return;
-    }*/
-    this.buildOrgUnit(event);
-};
 
 /**
  * Creates an orgunit for the given event
@@ -215,42 +202,12 @@ OutletRegistrator.prototype.postOrgUnit = function(event) {
 };
 
 /**
- * Returns the value of a given dataElement in one event
- */
-
-OutletRegistrator.prototype.getValue = function(event, uidField) {
-	var foundField = event.dataValues.find(field => {
-		return field.dataElement === uidField;
-	});
-	
-	if (!foundField) {
-		return "";
-	}
-	
-	return foundField.value;
-};
-
-/**
  * Returns a string with outlet code
  * {AMTR}{ParentCode}{-}{Increment}
  */
 OutletRegistrator.prototype.createOrgUnitCode = function(parentCode,autoIncrement) {
 	if (autoIncrement>0 && autoIncrement<10) automIncrement = "0"+autoIncrement;
 	return "AMTR"+parentCode+"-"+autoIncrement;
-};
-
-/**
- * Complete name is {outletName}{ (}{code}{)}
- */
-OutletRegistrator.prototype.formOutletCompleteName = function(name, code) {
-	return name + " (" + code + ")";
-};
-
-/**
- * The prefix for Myanmar is MM
- */
-OutletRegistrator.prototype.addCodePrefix = function(code){
-	return "MM_" + code;
 };
 
 /**
@@ -262,16 +219,6 @@ OutletRegistrator.prototype.setupCoordiantes = function(coord) {
 };
 
 /**
- * The opening date of the org. unit
- * It should the date field of the eventDate
- */
-OutletRegistrator.prototype.getOpeningDate = function(eventDate) {
-	var openingDate = eventDate.split('T')[0];
-	return openingDate;
-};
-
-
-/**
  * Returns an orgUnit with every required field
  * @param event The event with the data
  */
@@ -279,20 +226,20 @@ OutletRegistrator.prototype.createOrgUnitFromEvent = function(event) {
 
 	var newOu = {};
 	//get outlet name
-	var outletName = this.getValue(event, this.conf.dataElements.name);
+	var outletName = this.findDataValue(event, this.conf.dataElements.name);
 	//get outlet code
 	var outletCode = this.createOrgUnitCode(event.parentCode, event.autoIncrement);
 	//get outlet contact person
-	var outletContactPerson = this.getValue(event, this.conf.dataElements.contactPerson);	
+	var outletContactPerson = this.findDataValue(event, this.conf.dataElements.contactPerson);	
 	//get outlet address
-	var outletAddress = this.getValue(event, this.conf.dataElements.address);
+	var outletAddress = this.findDataValue(event, this.conf.dataElements.address);
 	//get outlet phone number
-	var outletPhoneNumber = this.getValue(event, this.conf.dataElements.phoneNumber);
+	var outletPhoneNumber = this.findDataValue(event, this.conf.dataElements.phoneNumber);
     
     newOu.code=this.myanmarPrefix+outletCode;
     newOu.name=outletName + " (" + outletCode + ")";
     newOu.shortName=outletName;
-    newOu.openingDate=this.getOpeningDate(event.eventDate);
+    newOu.openingDate=event.eventDate.split('T')[0]; //Removing the time
     newOu.featureType="POINT";
     newOu.parent={
         id:event.orgUnit
@@ -327,7 +274,7 @@ OutletRegistrator.prototype.postAndPatch = function(newOrgUnit, event) {
 		}
 		//If the import was successful
 		if (body.status == "OK") {
-			console.log("Created ", newOrgUnit, "with uid ", body.response.uid);
+			console.log("Created OrgUnit \n", newOrgUnit, "with uid ", body.response.uid);
 			_this.nextEvent();
 			_this.decorateOrgUnit(body.response.uid);
 			_this.addOutletType(body.response.uid,_this.getValue(event, _this.conf.dataElements.outletType));
@@ -563,25 +510,4 @@ OutletRegistrator.prototype.findDataValue = function(event,dataElement) {
     
     return dataValueFound?dataValueFound.value:null;
 };
-
-// /**
-//  * Post datavalues to server
-//  * @param dataValues The dataValues that will be posted
-//  */
-// OutletRegistrator.prototype.postDataValues = function(dataValues) {
-    
-//     var _this = this;
-//     var postInfo = this.prepareOptions(this.endpoints.DATAVALUESETS);        
-//     postInfo.json=true; 
-//     postInfo.body =  dataValues;       
-//     request.post(postInfo, function(error, response, body) {
-//         if(error){
-//             console.error("Error posting values: ",error);
-//             return;
-//         }
-//         console.log("Values posted OK, summary",JSON.stringify(body.importCount,null,"\t"));
-//     });
-// }
-
-
 
