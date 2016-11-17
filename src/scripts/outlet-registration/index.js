@@ -29,12 +29,12 @@ function OutletRegistrator(conf) {
         ORGUNITS: apiVersion+"/organisationUnits/[PARENT].json?includeChildren=true",
         DATAVALUESETS: apiVersion+"/dataValueSets",
         ORGUNIT: apiVersion+"/organisationUnits/",
-        ORGUNITGROUPORGUNIT: apiVersion+"/organisationUnitGroups/[UIDGROUP]/organisationUnits/[UIDOU]",
-        ORGUNITDATASET: apiVersion+"/organisationUnits/[UIDOU]/dataSets/[UIDDATASET]",
-        ORGUNITPROGRAM: apiVersion+"/organisationUnits/[UIDOU]/programs/[UIDPROGRAM]",
+        ORGUNITGROUPORGUNIT: apiVersion+"/organisationUnitGroups/[OUGROUP]/organisationUnits/[ORGUNIT]",
+        ORGUNITDATASET: apiVersion+"/organisationUnits/[ORGUNIT]/dataSets/[DATASET]",
+        ORGUNITPROGRAM: apiVersion+"/organisationUnits/[ORGUNIT]/programs/[PROGRAM]",
         OUTLETTYPE: apiVersion+"/organisationUnitGroups?filter=name:eq:[OUTLETTYPE]",
         USERSFILTER: apiVersion+"/userCredentials?fields=id,username,userInfo&filter=username:eq:[USERNAME]",
-        USERORGUNITS: apiVersion+"/users/[USER]/organisationUnits/[UIDOU]"
+        USERORGUNITS: apiVersion+"/users/[USER]/organisationUnits/[ORGUNIT]"
     };
     
     //This is the prefix of the Orgunit group names for Outlet Type
@@ -308,8 +308,8 @@ OutletRegistrator.prototype.addToOrgUnitGroup = function(newOrgUnitId) {
 	
 	this.conf.organisationUnitGroups.forEach(function(ougId){
 		var postInfo = _this.prepareOptions(_this.endpoints.ORGUNITGROUPORGUNIT);
-		postInfo.url = postInfo.url.replace("[UIDGROUP]",ougId);
-		postInfo.url = postInfo.url.replace("[UIDOU]", newOrgUnitId);
+		postInfo.url = postInfo.url.replace("[OUGROUP]",ougId);
+		postInfo.url = postInfo.url.replace("[ORGUNIT]", newOrgUnitId);
 		postInfo.json = true;
 		request.post(postInfo, function(error, response, body){
 			if (error) {console.error("Error adding the org. unit to the org. unit group ",error)}
@@ -326,8 +326,8 @@ OutletRegistrator.prototype.activatePrograms = function(newOrgUnitId) {
 	var _this=this;
 	this.conf.programs.forEach(function(programId){
 		var postInfo = _this.prepareOptions(_this.endpoints.ORGUNITPROGRAM);
-		postInfo.url = postInfo.url.replace("[UIDOU]", newOrgUnitId);
-		postInfo.url = postInfo.url.replace("[UIDPROGRAM]",programId);
+		postInfo.url = postInfo.url.replace("[ORGUNIT]", newOrgUnitId);
+		postInfo.url = postInfo.url.replace("[PROGRAM]",programId);
 		postInfo.json = true;
 		
 		request.post(postInfo, function(error, response, body){
@@ -346,8 +346,8 @@ OutletRegistrator.prototype.activateDataSets = function(newOrgUnitId) {
 	
 	this.conf.dataSets.forEach(function(dataSetId){
 		var postInfo = _this.prepareOptions(_this.endpoints.ORGUNITDATASET);
-		postInfo.url = postInfo.url.replace("[UIDOU]", newOrgUnitId);
-		postInfo.url = postInfo.url.replace("[UIDDATASET]",dataSetId);
+		postInfo.url = postInfo.url.replace("[ORGUNIT]", newOrgUnitId);
+		postInfo.url = postInfo.url.replace("[DATASET]",dataSetId);
 		postInfo.json = true;
 		request.post(postInfo, function(error, response, body){
 			if (error) {console.error("Error activating dataset ",error)}
@@ -389,8 +389,8 @@ OutletRegistrator.prototype.addOutletType = function(newOrgUnitId, outletTypeNam
  */
 OutletRegistrator.prototype.setupOutletType = function(newOrgUnitId, outletType) {
 	var postInfo = this.prepareOptions(this.endpoints.ORGUNITGROUPORGUNIT);
-	postInfo.url = postInfo.url.replace("[UIDOU]", newOrgUnitId);
-	postInfo.url = postInfo.url.replace("[UIDGROUP]",outletType.id);
+	postInfo.url = postInfo.url.replace("[ORGUNIT]", newOrgUnitId);
+	postInfo.url = postInfo.url.replace("[OUGROUP]",outletType.id);
 	postInfo.json = true;
 	request.post(postInfo, function(error, response, body){
 		if (error) {console.error("Error adding the orgunit to the outlet type ",error)}
@@ -431,7 +431,7 @@ OutletRegistrator.prototype.addUser = function(newOrgUnitId, userName) {
  */
 OutletRegistrator.prototype.setupUser = function(newOrgUnitId, user) {
 	var postInfo = this.prepareOptions(this.endpoints.USERORGUNITS);
-	postInfo.url = postInfo.url.replace("[UIDOU]", newOrgUnitId);
+	postInfo.url = postInfo.url.replace("[ORGUNIT]", newOrgUnitId);
 	postInfo.url = postInfo.url.replace("[USER]",user.userInfo.id);
 	postInfo.json = true;
 	request.post(postInfo, function(error, response, body){
