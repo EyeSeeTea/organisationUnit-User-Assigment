@@ -25,6 +25,7 @@ function OutletRegistrator(conf) {
     this.endpoints = {
         
         EVENTS: apiVersion+"/events.json?orgUnit=[ROOT]&ouMode=DESCENDANTS&program=[PROGRAM]&startDate=",
+        EDITEVENTS: apiVersion+"/events/[EVENT]",
         ORGUNITS: apiVersion+"/organisationUnits/[PARENT].json?includeChildren=true",
         DATAVALUESETS: apiVersion+"/dataValueSets",
         ORGUNIT: apiVersion+"/organisationUnits/",
@@ -308,12 +309,12 @@ OutletRegistrator.prototype.postAndPatch = function(newOrgUnit, event) {
 			_this.decorateOrgUnit(body.response.uid);
 			_this.addOutletType(body.response.uid,_this.getValue(event, _this.conf.dataElements.outletType));
 			_this.addUser(body.response.uid,event.storedBy);
+			_this.markImportedAsTrue(event);
 			return;
 		}
 		console.log("Org Unit has not been created");
 		console.log(JSON.stringify(body));
 	});
-	
 };
 
 /**
@@ -467,6 +468,44 @@ OutletRegistrator.prototype.setupUser = function(newOrgUnitId, user) {
 		if (error) {console.error("Error adding the orgunit to the user ",error)}
 		console.log(JSON.stringify(body));
 	});
+};
+
+OutletRegistrator.prototype.markImportedAsTrue = function(event) {
+	var eventToUpdate = this.fillEventToUpdate(event);
+	var putInfo = this.prepareOptions(this.endpoints.EDITEVENTS);
+	putInfo.url = putInfo.url.replace("[EVENT]",event.event);
+	putInfo.body = eventToUpdate;
+	putInfo.json = true;
+	
+	request.put(putInfo, function(error, response, body){
+		if (error) {console.error("Error updating the event ", error)};
+		console.log(JSON.stringify(body));
+	});
+};
+
+/**
+ * Format the event to be updated. Adding 
+ */
+OutletRegistrator.prototype.fillEventToUpdate = function(event) {
+	var eventToUpdate = {};
+	var _this = this;
+	
+	eventToUpdate.program = event.program ;
+	eventToUpdate.programStage = event.programStage;
+	eventToUpdate.event = event.event;
+	eventToUpdate.orgUnit = event.orgUnit;
+	eventToUpdate.status = event.status;
+	eventToUpdate.eventDate = event.eventDate.split('T')[0];
+	eventToUpdate.storedBy = event.storedBy;
+	eventToUpdate.coordinate = event.coordinate;
+	eventToUpdate.dataValues = [];
+	event.dataValues.forEach(function(dataValue) {
+		if (dataValue.dataElement != _this.conf.dataElements.alreadyImported)
+			eventToUpdate.dataValues.push({dataElement:dataValue.dataElement, value:dataValue.value});
+	});
+	eventToUpdate.dataValues.push({dataElement:_this.conf.dataElements.alreadyImported, value:"true"});
+	
+	return eventToUpdate;
 };
 
 /**
