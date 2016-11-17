@@ -41,7 +41,8 @@ function OutletRegistrator(conf) {
     this.outletTypePrefix = "MM Type - ";
     //This is the prefix for Myanmar
     this.myanmarPrefix = "MM_"
-
+    //Count of imported org. units
+    this.orgUnitsCreated = 0;
     //rest config
     this.conf = conf;
 
@@ -85,9 +86,13 @@ OutletRegistrator.prototype.loadLastEvents = function() {
         	return;
         }
         
+        _this.events.sort(function(a,b){
+        	return (a.eventDate > b.eventDate) ? 1 : ((b.eventDate > a.eventDate) ? -1 : 0);
+        });
+        
         _this.WaterfallPattern(_this.events, function(event) { _this.buildOrgUnit(event);},
          function (){
-        	console.log("Done!!!")
+        	console.log("Number of created org. units: ",_this.orgUnitsCreated);
          });
         
     });
@@ -98,7 +103,6 @@ OutletRegistrator.prototype.WaterfallPattern = function(events, action, callback
 	
 	OutletRegistrator.prototype.nextEvent = function() {
 		nextEventIndex++;
-		
 		if (nextEventIndex === events.length)
 			callback();
 		else
@@ -206,8 +210,8 @@ OutletRegistrator.prototype.postOrgUnit = function(event) {
  * {AMTR}{ParentCode}{-}{Increment}
  */
 OutletRegistrator.prototype.createOrgUnitCode = function(parentCode,autoIncrement) {
-	if (autoIncrement>0 && autoIncrement<10) automIncrement = "0"+autoIncrement;
-	return "AMTR"+parentCode+"-"+autoIncrement;
+	var formatNumber = (autoIncrement>0 && autoIncrement<10)?"0"+autoIncrement:autoIncrement;
+	return "AMTR"+parentCode+"-"+formatNumber;
 };
 
 /**
@@ -270,20 +274,23 @@ OutletRegistrator.prototype.postAndPatch = function(newOrgUnit, event) {
 	request.post(postInfo, function(error, response, body){
 		if (error) {
 			console.error("Error creating the org. unit: ", error);
+			_this.nextEvent();
 			return;
 		}
 		//If the import was successful
 		if (body.status == "OK") {
 			console.log("Created OrgUnit \n", newOrgUnit, "with uid ", body.response.uid);
+			_this.orgUnitsCreated++;
 			_this.nextEvent();
 			_this.decorateOrgUnit(body.response.uid);
-			_this.addOutletType(body.response.uid,_this.getValue(event, _this.conf.dataElements.outletType));
+			_this.addOutletType(body.response.uid,_this.findDataValue(event, _this.conf.dataElements.outletType));
 			_this.addUser(body.response.uid,event.storedBy);
 			_this.markImportedAsTrue(event);
 			return;
 		}
 		console.log("Org Unit has not been created");
 		console.log(JSON.stringify(body));
+		_this.nextEvent();
 	});
 };
 
