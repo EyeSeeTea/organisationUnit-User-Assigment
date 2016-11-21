@@ -17,9 +17,9 @@ fs.readFile('config.json', 'utf8', function(err, conf) {
 function OutletRegistrator(conf) {
 	
 	//get api version
-	var apiVersion="";
+    var apiVersion="";
 	
-	if (typeof(conf.apiVersion)!="undefined" && conf.apiVersion!="") apiVersion="/"+conf.apiVersion;
+    if (typeof(conf.apiVersion)!="undefined" && conf.apiVersion!="") apiVersion="/"+conf.apiVersion;
 	
     //used endpoints
     this.endpoints = {
@@ -99,17 +99,17 @@ OutletRegistrator.prototype.loadLastEvents = function() {
 };
 
 OutletRegistrator.prototype.WaterfallPattern = function(events, action, callback) {
-	var nextEventIndex = 0;
+    var nextEventIndex = 0;
 	
-	OutletRegistrator.prototype.nextEvent = function() {
-		nextEventIndex++;
-		if (nextEventIndex === events.length)
-			callback();
-		else
-			action(events[nextEventIndex]);
-	}
+    OutletRegistrator.prototype.nextEvent = function() {
+        nextEventIndex++;
+        if (nextEventIndex === events.length)
+            callback();
+        else
+            action(events[nextEventIndex]);
+    }
 	
-	action(events[0]);
+    action(events[0]);
 };
 
 /**
@@ -184,10 +184,10 @@ OutletRegistrator.prototype.findLastAutoIncrement = function(event,organisationU
 	//filter only those following the right sequence 'MM_AMTR[PARENTCODE]-'
     var onlyAMTROrgUnits = organisationUnits.filter(organisationUnit => organisationUnit.code.indexOf("MM_AMTR"+event.parentCode+"-")!==-1);
     onlyAMTROrgUnits.forEach(function(AMTROrgUnit){
-    	var currentValue = parseInt(AMTROrgUnit.code.split("-")[1]);
-    	if (!isNaN(currentValue)) {
-    		max = currentValue>max?currentValue:max;
-    	}    
+        var currentValue = parseInt(AMTROrgUnit.code.split("-")[1]);
+        if (!isNaN(currentValue)) {
+    	    max = currentValue>max?currentValue:max;
+        }    
     });
 
     return max;    
@@ -210,16 +210,16 @@ OutletRegistrator.prototype.postOrgUnit = function(event) {
  * {AMTR}{ParentCode}{-}{Increment}
  */
 OutletRegistrator.prototype.createOrgUnitCode = function(parentCode,autoIncrement) {
-	var formatNumber = (autoIncrement>0 && autoIncrement<10)?"0"+autoIncrement:autoIncrement;
-	return "AMTR"+parentCode+"-"+formatNumber;
+    var formatNumber = (autoIncrement>0 && autoIncrement<10)?"0"+autoIncrement:autoIncrement;
+    return "AMTR"+parentCode+"-"+formatNumber;
 };
 
 /**
  * DHIS2 format for coordinates [longitude,latitude]
  */
 OutletRegistrator.prototype.setupCoordiantes = function(coord) {
-	coordinates = [coord.longitude, coord.latitude];
-	return coordinates;
+    coordinates = [coord.longitude, coord.latitude];
+    return coordinates;
 };
 
 /**
@@ -228,17 +228,17 @@ OutletRegistrator.prototype.setupCoordiantes = function(coord) {
  */
 OutletRegistrator.prototype.createOrgUnitFromEvent = function(event) {
 
-	var newOu = {};
-	//get outlet name
-	var outletName = this.findDataValue(event, this.conf.dataElements.name);
-	//get outlet code
-	var outletCode = this.createOrgUnitCode(event.parentCode, event.autoIncrement);
-	//get outlet contact person
-	var outletContactPerson = this.findDataValue(event, this.conf.dataElements.contactPerson);	
-	//get outlet address
-	var outletAddress = this.findDataValue(event, this.conf.dataElements.address);
-	//get outlet phone number
-	var outletPhoneNumber = this.findDataValue(event, this.conf.dataElements.phoneNumber);
+    var newOu = {};
+    //get outlet name
+    var outletName = this.findDataValue(event, this.conf.dataElements.name);
+    //get outlet code
+    var outletCode = this.createOrgUnitCode(event.parentCode, event.autoIncrement);
+    //get outlet contact person
+    var outletContactPerson = this.findDataValue(event, this.conf.dataElements.contactPerson);	
+    //get outlet address
+    var outletAddress = this.findDataValue(event, this.conf.dataElements.address);
+    //get outlet phone number
+    var outletPhoneNumber = this.findDataValue(event, this.conf.dataElements.phoneNumber);
     
     newOu.code=this.myanmarPrefix+outletCode;
     newOu.name=outletName + " (" + outletCode + ")";
@@ -264,46 +264,45 @@ OutletRegistrator.prototype.createOrgUnitFromEvent = function(event) {
  * @param event The event
  */
 OutletRegistrator.prototype.postAndPatch = function(newOrgUnit, event) {       
-    //TODO Post orgunit
-        //Patch alreadyCreated   
-	var _this = this;
-	var postInfo = this.prepareOptions(this.endpoints.ORGUNIT);
-	postInfo.json = true;
-	postInfo.body = newOrgUnit;
+
+    var _this = this;
+    var postInfo = this.prepareOptions(this.endpoints.ORGUNIT);
+    postInfo.json = true;
+    postInfo.body = newOrgUnit;
 	
-	request.post(postInfo, function(error, response, body){
-		if (error) {
-			console.error("Error creating the org. unit: ", error);
-			_this.nextEvent();
-			return;
-		}
-		//If the import was successful
-		if (body.status == "OK") {
-			console.log("Created OrgUnit \n", newOrgUnit, "with uid ", body.response.uid);
-			_this.orgUnitsCreated++;
-			_this.nextEvent();
-			_this.decorateOrgUnit(body.response.uid);
-			_this.addOutletType(body.response.uid,_this.findDataValue(event, _this.conf.dataElements.outletType));
-			_this.addUser(body.response.uid,event.storedBy);
-			_this.markImportedAsTrue(event);
-			return;
-		}
-		console.log("Org Unit has not been created");
-		console.log(JSON.stringify(body));
-		_this.nextEvent();
-	});
+    request.post(postInfo, function(error, response, body){
+        if (error) {
+            console.error("Error creating the org. unit: ", error);
+           _this.nextEvent();
+           return;
+        }
+        //If the import was successful
+        if (body.status == "OK") {
+            console.log("Created OrgUnit \n", newOrgUnit, "with uid ", body.response.uid);
+            _this.orgUnitsCreated++;
+            _this.nextEvent();
+            _this.decorateOrgUnit(body.response.uid);
+            _this.addOutletType(body.response.uid,_this.findDataValue(event, _this.conf.dataElements.outletType));
+            _this.addUser(body.response.uid,event.storedBy);
+            _this.markImportedAsTrue(event);
+            return;
+        }
+        console.log("Org Unit has not been created");
+        console.log(JSON.stringify(body));
+        _this.nextEvent();
+    });
 };
 
 /**
  * Decorates the org. unit with dataSets, org. unit groups, and programs
  */
 OutletRegistrator.prototype.decorateOrgUnit = function(newOrgUnitId) {
-	//Activate datasets
-	this.activateDataSets(newOrgUnitId);
-	//Activate programs
-	this.activatePrograms(newOrgUnitId);
-	//Add to OrgUnitGroups
-	this.addToOrgUnitGroup(newOrgUnitId);
+    //Activate datasets
+    this.activateDataSets(newOrgUnitId);
+    //Activate programs
+    this.activatePrograms(newOrgUnitId);
+    //Add to OrgUnitGroups
+    this.addToOrgUnitGroup(newOrgUnitId);
 };
 
 
@@ -311,18 +310,18 @@ OutletRegistrator.prototype.decorateOrgUnit = function(newOrgUnitId) {
  * Activate programs for a particular OrgUnit
  */
 OutletRegistrator.prototype.addToOrgUnitGroup = function(newOrgUnitId) {
-	var _this=this;
+    var _this=this;
 	
-	this.conf.organisationUnitGroups.forEach(function(ougId){
-		var postInfo = _this.prepareOptions(_this.endpoints.ORGUNITGROUPORGUNIT);
-		postInfo.url = postInfo.url.replace("[OUGROUP]",ougId);
-		postInfo.url = postInfo.url.replace("[ORGUNIT]", newOrgUnitId);
-		postInfo.json = true;
-		request.post(postInfo, function(error, response, body){
-			if (error) {console.error("Error adding the org. unit to the org. unit group ",error)}
-			console.log(JSON.stringify(body));
-		});
-	});
+    this.conf.organisationUnitGroups.forEach(function(ougId){
+        var postInfo = _this.prepareOptions(_this.endpoints.ORGUNITGROUPORGUNIT);
+        postInfo.url = postInfo.url.replace("[OUGROUP]",ougId);
+        postInfo.url = postInfo.url.replace("[ORGUNIT]", newOrgUnitId);
+        postInfo.json = true;
+        request.post(postInfo, function(error, response, body){
+        	if (error) {console.error("Error adding the org. unit to the org. unit group ",error)}
+        	console.log(JSON.stringify(body));
+        });
+    });
 };
 
 
@@ -330,18 +329,18 @@ OutletRegistrator.prototype.addToOrgUnitGroup = function(newOrgUnitId) {
  * Activate programs for a particular OrgUnit
  */
 OutletRegistrator.prototype.activatePrograms = function(newOrgUnitId) {				
-	var _this=this;
-	this.conf.programs.forEach(function(programId){
-		var postInfo = _this.prepareOptions(_this.endpoints.ORGUNITPROGRAM);
-		postInfo.url = postInfo.url.replace("[ORGUNIT]", newOrgUnitId);
-		postInfo.url = postInfo.url.replace("[PROGRAM]",programId);
-		postInfo.json = true;
-		
-		request.post(postInfo, function(error, response, body){
-			if (error) {console.error("Error activating program ",error)}
-			console.log(JSON.stringify(body));
-		});
-	});
+    var _this=this;
+    this.conf.programs.forEach(function(programId){
+        var postInfo = _this.prepareOptions(_this.endpoints.ORGUNITPROGRAM);
+        postInfo.url = postInfo.url.replace("[ORGUNIT]", newOrgUnitId);
+        postInfo.url = postInfo.url.replace("[PROGRAM]",programId);
+        postInfo.json = true;
+        
+        request.post(postInfo, function(error, response, body){
+            if (error) {console.error("Error activating program ",error)}
+            console.log(JSON.stringify(body));
+        });
+    });
 };
 
 
@@ -349,18 +348,18 @@ OutletRegistrator.prototype.activatePrograms = function(newOrgUnitId) {
  * Activate datasets for a particular OrgUnit
  */
 OutletRegistrator.prototype.activateDataSets = function(newOrgUnitId) {
-	var _this=this;
-	
-	this.conf.dataSets.forEach(function(dataSetId){
-		var postInfo = _this.prepareOptions(_this.endpoints.ORGUNITDATASET);
-		postInfo.url = postInfo.url.replace("[ORGUNIT]", newOrgUnitId);
-		postInfo.url = postInfo.url.replace("[DATASET]",dataSetId);
-		postInfo.json = true;
-		request.post(postInfo, function(error, response, body){
-			if (error) {console.error("Error activating dataset ",error)}
-			console.log(JSON.stringify(body));
-		});
-	});	
+    var _this=this;
+    
+    this.conf.dataSets.forEach(function(dataSetId){
+        var postInfo = _this.prepareOptions(_this.endpoints.ORGUNITDATASET);
+        postInfo.url = postInfo.url.replace("[ORGUNIT]", newOrgUnitId);
+        postInfo.url = postInfo.url.replace("[DATASET]",dataSetId);
+        postInfo.json = true;
+        request.post(postInfo, function(error, response, body){
+            if (error) {console.error("Error activating dataset ",error)}
+            console.log(JSON.stringify(body));
+        });
+    });	
 };
 
 
@@ -369,40 +368,39 @@ OutletRegistrator.prototype.activateDataSets = function(newOrgUnitId) {
  * If found, it calls the method to add the org. unit to the orgunit group
  */
 OutletRegistrator.prototype.addOutletType = function(newOrgUnitId, outletTypeName) {
-	var _this = this;
-	
-	var completeOutletType = this.outletTypePrefix + outletTypeName;
-	var requestData = this.prepareOptions(this.endpoints.OUTLETTYPE);
-	requestData.url = requestData.url.replace("[OUTLETTYPE]", completeOutletType);
-	requestData.json = true;
-	request(requestData, function(error, response, body){
-		if (error) {
-			console.error("Error getting the outlet type ",error);
-			return;	
-		}
-		if (body.organisationUnitGroups.length!=1) {
-			console.log("Outlet type not found in the server")
-			return;
-		}
-		//get the outletType.
-		var outletType = body.organisationUnitGroups[0];
-		_this.setupOutletType(newOrgUnitId,outletType);
-		
-	});
+    var _this = this;
+    
+    var completeOutletType = this.outletTypePrefix + outletTypeName;
+    var requestData = this.prepareOptions(this.endpoints.OUTLETTYPE);
+    requestData.url = requestData.url.replace("[OUTLETTYPE]", completeOutletType);
+    requestData.json = true;
+    request(requestData, function(error, response, body){
+        if (error) {
+            console.error("Error getting the outlet type ",error);
+            return;	
+        }
+        if (body.organisationUnitGroups.length!=1) {
+            console.log("Outlet type not found in the server")
+            return;
+        }
+        //get the outletType.
+        var outletType = body.organisationUnitGroups[0];
+        _this.setupOutletType(newOrgUnitId,outletType);
+    });
 };
 
 /**
  * Add the new org. unit to the an OutletType org. unit group
  */
 OutletRegistrator.prototype.setupOutletType = function(newOrgUnitId, outletType) {
-	var postInfo = this.prepareOptions(this.endpoints.ORGUNITGROUPORGUNIT);
-	postInfo.url = postInfo.url.replace("[ORGUNIT]", newOrgUnitId);
-	postInfo.url = postInfo.url.replace("[OUGROUP]",outletType.id);
-	postInfo.json = true;
-	request.post(postInfo, function(error, response, body){
-		if (error) {console.error("Error adding the orgunit to the outlet type ",error)}
-		console.log(JSON.stringify(body));
-	});
+    var postInfo = this.prepareOptions(this.endpoints.ORGUNITGROUPORGUNIT);
+    postInfo.url = postInfo.url.replace("[ORGUNIT]", newOrgUnitId);
+    postInfo.url = postInfo.url.replace("[OUGROUP]",outletType.id);
+    postInfo.json = true;
+    request.post(postInfo, function(error, response, body){
+        if (error) {console.error("Error adding the orgunit to the outlet type ",error)}
+        console.log(JSON.stringify(body));
+    });
 };
 
 /**
@@ -410,79 +408,78 @@ OutletRegistrator.prototype.setupOutletType = function(newOrgUnitId, outletType)
  * If found, it calls the method to add the org. unit to the orgunit group
  */
 OutletRegistrator.prototype.addUser = function(newOrgUnitId, userName) {
-	var _this = this;
-	
-	console.log("Adding user ", userName, " to the org. unit ", newOrgUnitId);
-	var requestData = this.prepareOptions(this.endpoints.USERSFILTER);
-	requestData.url = requestData.url.replace("[USERNAME]", userName);
-	console.log(requestData.url);
-	requestData.json = true;
-	request(requestData, function(error, response, body){
-		if (error) {
-			console.error("Error getting the users ",error);
-			return;	
-		}
-		if (body.userCredentials.length!=1) {
-			console.log("User not found in the server")
-			return;
-		}
-		//get the outletType
-		var user = body.userCredentials[0];
-		_this.setupUser(newOrgUnitId,user);
-		
-	});
+    var _this = this;
+    
+    console.log("Adding user ", userName, " to the org. unit ", newOrgUnitId);
+    var requestData = this.prepareOptions(this.endpoints.USERSFILTER);
+    requestData.url = requestData.url.replace("[USERNAME]", userName);
+    console.log(requestData.url);
+    requestData.json = true;
+    request(requestData, function(error, response, body){
+        if (error) {
+            console.error("Error getting the users ",error);
+            return;	
+        }
+        if (body.userCredentials.length!=1) {
+            console.log("User not found in the server")
+            return;
+        }
+        //get the outletType
+        var user = body.userCredentials[0];
+        _this.setupUser(newOrgUnitId,user);
+    });
 };
 
 /**
  * Add the new org. unit to the an OutletType org. unit group
  */
 OutletRegistrator.prototype.setupUser = function(newOrgUnitId, user) {
-	var postInfo = this.prepareOptions(this.endpoints.USERORGUNITS);
-	postInfo.url = postInfo.url.replace("[ORGUNIT]", newOrgUnitId);
-	postInfo.url = postInfo.url.replace("[USER]",user.userInfo.id);
-	postInfo.json = true;
-	request.post(postInfo, function(error, response, body){
-		if (error) {console.error("Error adding the orgunit to the user ",error)}
-		console.log(JSON.stringify(body));
-	});
+    var postInfo = this.prepareOptions(this.endpoints.USERORGUNITS);
+    postInfo.url = postInfo.url.replace("[ORGUNIT]", newOrgUnitId);
+    postInfo.url = postInfo.url.replace("[USER]",user.userInfo.id);
+    postInfo.json = true;
+    request.post(postInfo, function(error, response, body){
+        if (error) {console.error("Error adding the orgunit to the user ",error)}
+        console.log(JSON.stringify(body));
+    });
 };
 
 OutletRegistrator.prototype.markImportedAsTrue = function(event) {
-	var eventToUpdate = this.fillEventToUpdate(event);
-	var putInfo = this.prepareOptions(this.endpoints.EDITEVENTS);
-	putInfo.url = putInfo.url.replace("[EVENT]",event.event);
-	putInfo.body = eventToUpdate;
-	putInfo.json = true;
-	
-	request.put(putInfo, function(error, response, body){
-		if (error) {console.error("Error updating the event ", error)};
-		console.log(JSON.stringify(body));
-	});
+    var eventToUpdate = this.fillEventToUpdate(event);
+    var putInfo = this.prepareOptions(this.endpoints.EDITEVENTS);
+    putInfo.url = putInfo.url.replace("[EVENT]",event.event);
+    putInfo.body = eventToUpdate;
+    putInfo.json = true;
+    
+    request.put(putInfo, function(error, response, body){
+        if (error) {console.error("Error updating the event ", error)};
+        console.log(JSON.stringify(body));
+    });
 };
 
 /**
  * Format the event to be updated. Adding 
  */
 OutletRegistrator.prototype.fillEventToUpdate = function(event) {
-	var eventToUpdate = {};
-	var _this = this;
-	
-	eventToUpdate.program = event.program ;
-	eventToUpdate.programStage = event.programStage;
-	eventToUpdate.event = event.event;
-	eventToUpdate.orgUnit = event.orgUnit;
-	eventToUpdate.status = event.status;
-	eventToUpdate.eventDate = event.eventDate.split('T')[0];
-	eventToUpdate.storedBy = event.storedBy;
-	eventToUpdate.coordinate = event.coordinate;
-	eventToUpdate.dataValues = [];
-	event.dataValues.forEach(function(dataValue) {
-		if (dataValue.dataElement != _this.conf.dataElements.alreadyImported)
-			eventToUpdate.dataValues.push({dataElement:dataValue.dataElement, value:dataValue.value});
-	});
-	eventToUpdate.dataValues.push({dataElement:_this.conf.dataElements.alreadyImported, value:"true"});
-	
-	return eventToUpdate;
+    var eventToUpdate = {};
+    var _this = this;
+    
+    eventToUpdate.program = event.program ;
+    eventToUpdate.programStage = event.programStage;
+    eventToUpdate.event = event.event;
+    eventToUpdate.orgUnit = event.orgUnit;
+    eventToUpdate.status = event.status;
+    eventToUpdate.eventDate = event.eventDate.split('T')[0];
+    eventToUpdate.storedBy = event.storedBy;
+    eventToUpdate.coordinate = event.coordinate;
+    eventToUpdate.dataValues = [];
+    event.dataValues.forEach(function(dataValue) {
+        if (dataValue.dataElement != _this.conf.dataElements.alreadyImported)
+            eventToUpdate.dataValues.push({dataElement:dataValue.dataElement, value:dataValue.value});
+    });
+    eventToUpdate.dataValues.push({dataElement:_this.conf.dataElements.alreadyImported, value:"true"});
+    
+    return eventToUpdate;
 };
 
 /**
