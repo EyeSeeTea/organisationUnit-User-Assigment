@@ -138,6 +138,7 @@ OutletRegistrator.prototype.buildOrgUnit = function(event) {
         //error -> done
         if(error){
             console.error("\t",event.orgUnit," => cannot resolve children");
+            _this.nextEvent();
             return;
         }
         
@@ -146,6 +147,7 @@ OutletRegistrator.prototype.buildOrgUnit = function(event) {
         event.parentCode = _this.findParentCode (event,organisationUnits);
         if(!event.parentCode){
             console.error("\t",event.orgUnit," => cannot resolve 'parentCode'");
+            _this.nextEvent();
             return;    
         }
         
@@ -154,6 +156,7 @@ OutletRegistrator.prototype.buildOrgUnit = function(event) {
         
         if(!event.autoIncrement){
             console.error("\t",event.orgUnit," => cannot resolve 'autoIncrement'");
+            _this.nextEvent();
             return;                
         }
                
@@ -202,7 +205,13 @@ OutletRegistrator.prototype.postOrgUnit = function(event) {
     //Prepare orgUnit
     var newOrgUnit = this.createOrgUnitFromEvent(event);
     //Post orgunit  
-    this.postAndPatch(newOrgUnit, event);        
+    if (!this.ifValidOrgUnit(newOrgUnit)) {
+        console.log("Compulsory fields have not been filled ",newOrgUnit);
+        this.nextEvent();
+        return
+    }
+    this.postAndPatch(newOrgUnit, event);
+  
 };
 
 /**
@@ -239,6 +248,8 @@ OutletRegistrator.prototype.createOrgUnitFromEvent = function(event) {
     var outletAddress = this.findDataValue(event, this.conf.dataElements.address);
     //get outlet phone number
     var outletPhoneNumber = this.findDataValue(event, this.conf.dataElements.phoneNumber);
+    //get outlet type
+    var outletType = this.findDataValue(event, this.conf.dataElements.outletType);
     
     newOu.code=this.myanmarPrefix+outletCode;
     newOu.name=outletName + " (" + outletCode + ")";
@@ -251,12 +262,24 @@ OutletRegistrator.prototype.createOrgUnitFromEvent = function(event) {
     newOu.address=outletAddress;
     newOu.phoneNumber=outletPhoneNumber;
     newOu.contactPerson=outletContactPerson;
+    newOu.outletType=outletType;
     //(0,0) means the coordinates have not been pushed from android
     if (event.coordinate.longitude!=0 ||  event.coordinate.latitude!=0)
     	newOu.coordinates=JSON.stringify(this.setupCoordiantes(event.coordinate));
     
     return newOu;
-} 
+}
+
+OutletRegistrator.prototype.getUserFromEvent = function(event) {
+    var dataValues = event.dataValues;
+    var username="";
+    
+    if (dataValues.length>0){
+    	username = event.dataValues[0].storedBy;
+    } 
+    
+    return username;
+}
   
 
 /**
@@ -282,8 +305,8 @@ OutletRegistrator.prototype.postAndPatch = function(newOrgUnit, event) {
             _this.orgUnitsCreated++;
             _this.nextEvent();
             _this.decorateOrgUnit(body.response.uid);
-            _this.addOutletType(body.response.uid,_this.findDataValue(event, _this.conf.dataElements.outletType));
-            _this.addUser(body.response.uid,event.storedBy);
+            _this.addOutletType(body.response.uid, newOrgUnit.outletType);
+            _this.addUser(body.response.uid,_this.getUserFromEvent(event));
             _this.markImportedAsTrue(event);
             return;
         }
@@ -481,6 +504,17 @@ OutletRegistrator.prototype.fillEventToUpdate = function(event) {
     
     return eventToUpdate;
 };
+
+OutletRegistrator.prototype.ifValidOrgUnit = function(orgUnit) {
+    var validOrgUnit = true;
+    console.log("Chequeando ",orgUnit);
+    validOrgUnit = validOrgUnit && orgUnit.shortName!=null && orgUnit.shortName.trim()!="";
+    validOrgUnit = validOrgUnit && orgUnit.outletType!=null && orgUnit.outletType.trim()!="";
+    validOrgUnit = validOrgUnit && orgUnit.contactPerson!=null && orgUnit.contactPerson.trim()!="";
+    valirOrgUnit = validOrgUnit && orgUnit.address!=null && orgUnit.address.trim()!="";
+    
+    return validOrgUnit;
+}
 
 /**
  * Returns the has been already imported or not
