@@ -98,6 +98,12 @@ OutletRegistrator.prototype.loadLastEvents = function() {
     });
 };
 
+/**
+ * Watterfall pattern to call API methods in order
+ * @params events
+ * @params action The method to be executed per event
+ * @params callback The method to be executed at the end of the iterations
+ */
 OutletRegistrator.prototype.WaterfallPattern = function(events, action, callback) {
     var nextEventIndex = 0;
 	
@@ -217,6 +223,8 @@ OutletRegistrator.prototype.postOrgUnit = function(event) {
 /**
  * Returns a string with outlet code
  * {AMTR}{ParentCode}{-}{Increment}
+ * @params parentCode of the parent org. unit
+ * @params autoIncrement integer to be added to the code
  */
 OutletRegistrator.prototype.createOrgUnitCode = function(parentCode,autoIncrement) {
     var formatNumber = (autoIncrement>0 && autoIncrement<10)?"0"+autoIncrement:autoIncrement;
@@ -225,6 +233,7 @@ OutletRegistrator.prototype.createOrgUnitCode = function(parentCode,autoIncremen
 
 /**
  * DHIS2 format for coordinates [longitude,latitude]
+ * @params coord [longitude, latitude] coordinates
  */
 OutletRegistrator.prototype.setupCoordiantes = function(coord) {
     coordinates = [coord.longitude, coord.latitude];
@@ -270,6 +279,11 @@ OutletRegistrator.prototype.createOrgUnitFromEvent = function(event) {
     return newOu;
 }
 
+/**
+ * Get the user from the event.
+ * We need to get the user from the storedBy attribute of the datavalues
+ * @params event
+ */
 OutletRegistrator.prototype.getUserFromEvent = function(event) {
     var dataValues = event.dataValues;
     var username="";
@@ -301,12 +315,16 @@ OutletRegistrator.prototype.postAndPatch = function(newOrgUnit, event) {
         }
         //If the import was successful
         if (body.status == "OK") {
-            console.log("Created OrgUnit \n", newOrgUnit, "with uid ", body.response.uid);
+        	//Adding the uid to the new org. unit
+        	newOrgUnit.uid = body.response.uid;
+        	//Adding the user to the new org. unit
+        	newOrgUnit.user = _this.getUserFromEvent(event);
+            console.log("Created OrgUnit \n", newOrgUnit);
             _this.orgUnitsCreated++;
             _this.nextEvent();
-            _this.decorateOrgUnit(body.response.uid);
-            _this.addOutletType(body.response.uid, newOrgUnit.outletType);
-            _this.addUser(body.response.uid,_this.getUserFromEvent(event));
+            _this.decorateOrgUnit(newOrgUnit);
+            _this.addOutletType(newOrgUnit);
+            _this.addUser(newOrgUnit);
             _this.markImportedAsTrue(event);
             return;
         }
@@ -318,27 +336,29 @@ OutletRegistrator.prototype.postAndPatch = function(newOrgUnit, event) {
 
 /**
  * Decorates the org. unit with dataSets, org. unit groups, and programs
+ * @param newOrgUnit
  */
-OutletRegistrator.prototype.decorateOrgUnit = function(newOrgUnitId) {
+OutletRegistrator.prototype.decorateOrgUnit = function(newOrgUnit) {
     //Activate datasets
-    this.activateDataSets(newOrgUnitId);
+    this.activateDataSets(newOrgUnit);
     //Activate programs
-    this.activatePrograms(newOrgUnitId);
+    this.activatePrograms(newOrgUnit);
     //Add to OrgUnitGroups
-    this.addToOrgUnitGroup(newOrgUnitId);
+    this.addToOrgUnitGroup(newOrgUnit);
 };
 
 
 /***
  * Activate programs for a particular OrgUnit
+ * @param newOrgUnit
  */
-OutletRegistrator.prototype.addToOrgUnitGroup = function(newOrgUnitId) {
+OutletRegistrator.prototype.addToOrgUnitGroup = function(newOrgUnit) {
     var _this=this;
 	
     this.conf.organisationUnitGroups.forEach(function(ougId){
         var postInfo = _this.prepareOptions(_this.endpoints.ORGUNITGROUPORGUNIT);
         postInfo.url = postInfo.url.replace("[OUGROUP]",ougId);
-        postInfo.url = postInfo.url.replace("[ORGUNIT]", newOrgUnitId);
+        postInfo.url = postInfo.url.replace("[ORGUNIT]", newOrgUnit.uid);
         postInfo.json = true;
         request.post(postInfo, function(error, response, body){
         	if (error) {console.error("Error adding the org. unit to the org. unit group ",error)}
@@ -350,12 +370,13 @@ OutletRegistrator.prototype.addToOrgUnitGroup = function(newOrgUnitId) {
 
 /***
  * Activate programs for a particular OrgUnit
+ * @param newOrgUnit
  */
-OutletRegistrator.prototype.activatePrograms = function(newOrgUnitId) {				
+OutletRegistrator.prototype.activatePrograms = function(newOrgUnit) {				
     var _this=this;
     this.conf.programs.forEach(function(programId){
         var postInfo = _this.prepareOptions(_this.endpoints.ORGUNITPROGRAM);
-        postInfo.url = postInfo.url.replace("[ORGUNIT]", newOrgUnitId);
+        postInfo.url = postInfo.url.replace("[ORGUNIT]", newOrgUnit.uid);
         postInfo.url = postInfo.url.replace("[PROGRAM]",programId);
         postInfo.json = true;
         
@@ -369,13 +390,14 @@ OutletRegistrator.prototype.activatePrograms = function(newOrgUnitId) {
 
 /***
  * Activate datasets for a particular OrgUnit
+ * @param newOrgUnit
  */
-OutletRegistrator.prototype.activateDataSets = function(newOrgUnitId) {
+OutletRegistrator.prototype.activateDataSets = function(newOrgUnit) {
     var _this=this;
     
     this.conf.dataSets.forEach(function(dataSetId){
         var postInfo = _this.prepareOptions(_this.endpoints.ORGUNITDATASET);
-        postInfo.url = postInfo.url.replace("[ORGUNIT]", newOrgUnitId);
+        postInfo.url = postInfo.url.replace("[ORGUNIT]", newOrgUnit.uid);
         postInfo.url = postInfo.url.replace("[DATASET]",dataSetId);
         postInfo.json = true;
         request.post(postInfo, function(error, response, body){
@@ -389,11 +411,12 @@ OutletRegistrator.prototype.activateDataSets = function(newOrgUnitId) {
 /**
  * Look for the specific Org Unit Group based on the outletTypeName
  * If found, it calls the method to add the org. unit to the orgunit group
+ * @param newOrgUnit
  */
-OutletRegistrator.prototype.addOutletType = function(newOrgUnitId, outletTypeName) {
+OutletRegistrator.prototype.addOutletType = function(newOrgUnit) {
     var _this = this;
     
-    var completeOutletType = this.outletTypePrefix + outletTypeName;
+    var completeOutletType = this.outletTypePrefix + newOrgUnit.outletType;
     var requestData = this.prepareOptions(this.endpoints.OUTLETTYPE);
     requestData.url = requestData.url.replace("[OUTLETTYPE]", completeOutletType);
     requestData.json = true;
@@ -408,16 +431,18 @@ OutletRegistrator.prototype.addOutletType = function(newOrgUnitId, outletTypeNam
         }
         //get the outletType.
         var outletType = body.organisationUnitGroups[0];
-        _this.setupOutletType(newOrgUnitId,outletType);
+        _this.setupOutletType(newOrgUnit,outletType);
     });
 };
 
 /**
  * Add the new org. unit to the an OutletType org. unit group
+ * @param newOrgUnit
+ * @param outletType
  */
-OutletRegistrator.prototype.setupOutletType = function(newOrgUnitId, outletType) {
+OutletRegistrator.prototype.setupOutletType = function(newOrgUnit, outletType) {
     var postInfo = this.prepareOptions(this.endpoints.ORGUNITGROUPORGUNIT);
-    postInfo.url = postInfo.url.replace("[ORGUNIT]", newOrgUnitId);
+    postInfo.url = postInfo.url.replace("[ORGUNIT]", newOrgUnit.uid);
     postInfo.url = postInfo.url.replace("[OUGROUP]",outletType.id);
     postInfo.json = true;
     request.post(postInfo, function(error, response, body){
@@ -427,15 +452,16 @@ OutletRegistrator.prototype.setupOutletType = function(newOrgUnitId, outletType)
 };
 
 /**
- * Look for the specific Org Unit Group based on the outletTypeName
- * If found, it calls the method to add the org. unit to the orgunit group
+ * Look for the DHIS2 user who has created the event
+ * If found, it calls the method to add the org. unit to the user
+ * @param newOrgUnit
  */
-OutletRegistrator.prototype.addUser = function(newOrgUnitId, userName) {
+OutletRegistrator.prototype.addUser = function(newOrgUnit) {
     var _this = this;
     
-    console.log("Adding user ", userName, " to the org. unit ", newOrgUnitId);
+    console.log("Adding user ", newOrgUnit.user, " to the org. unit ", newOrgUnit.uid);
     var requestData = this.prepareOptions(this.endpoints.USERSFILTER);
-    requestData.url = requestData.url.replace("[USERNAME]", userName);
+    requestData.url = requestData.url.replace("[USERNAME]", newOrgUnit.user);
     console.log(requestData.url);
     requestData.json = true;
     request(requestData, function(error, response, body){
@@ -449,16 +475,18 @@ OutletRegistrator.prototype.addUser = function(newOrgUnitId, userName) {
         }
         //get the outletType
         var user = body.userCredentials[0];
-        _this.setupUser(newOrgUnitId,user);
+        _this.setupUser(newOrgUnit,user);
     });
 };
 
 /**
- * Add the new org. unit to the an OutletType org. unit group
+ * Add the new org. unit to the DHIS2 user
+ * @param newOrgUnit
+ * @param user
  */
-OutletRegistrator.prototype.setupUser = function(newOrgUnitId, user) {
+OutletRegistrator.prototype.setupUser = function(newOrgUnit, user) {
     var postInfo = this.prepareOptions(this.endpoints.USERORGUNITS);
-    postInfo.url = postInfo.url.replace("[ORGUNIT]", newOrgUnitId);
+    postInfo.url = postInfo.url.replace("[ORGUNIT]", newOrgUnit.uid);
     postInfo.url = postInfo.url.replace("[USER]",user.userInfo.id);
     postInfo.json = true;
     request.post(postInfo, function(error, response, body){
@@ -467,6 +495,10 @@ OutletRegistrator.prototype.setupUser = function(newOrgUnitId, user) {
     });
 };
 
+/**
+ * Marks the event as already imported
+ * @param event
+ */
 OutletRegistrator.prototype.markImportedAsTrue = function(event) {
     var eventToUpdate = this.fillEventToUpdate(event);
     var putInfo = this.prepareOptions(this.endpoints.EDITEVENTS);
@@ -481,7 +513,8 @@ OutletRegistrator.prototype.markImportedAsTrue = function(event) {
 };
 
 /**
- * Format the event to be updated. Adding 
+ * Format the event to be updated. It set up 'already imported' to true
+ * @param event
  */
 OutletRegistrator.prototype.fillEventToUpdate = function(event) {
     var eventToUpdate = {};
@@ -505,9 +538,12 @@ OutletRegistrator.prototype.fillEventToUpdate = function(event) {
     return eventToUpdate;
 };
 
+/**
+ * Check if the org. unit has all its compulsory fields filled
+ * @param orgUnit
+ */
 OutletRegistrator.prototype.ifValidOrgUnit = function(orgUnit) {
     var validOrgUnit = true;
-    console.log("Chequeando ",orgUnit);
     validOrgUnit = validOrgUnit && orgUnit.shortName!=null && orgUnit.shortName.trim()!="";
     validOrgUnit = validOrgUnit && orgUnit.outletType!=null && orgUnit.outletType.trim()!="";
     validOrgUnit = validOrgUnit && orgUnit.contactPerson!=null && orgUnit.contactPerson.trim()!="";
