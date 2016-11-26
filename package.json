@@ -99,10 +99,5 @@
         "href": ".."
       }
     }
-  },
-  "pre-commit": [
-    "lint",
-    "validate",
-    "test"
-  ]
+  }
 }
