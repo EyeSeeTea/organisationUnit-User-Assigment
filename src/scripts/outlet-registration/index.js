@@ -15,26 +15,21 @@ fs.readFile('config.json', 'utf8', function(err, conf) {
  * Class in charge of loading autoindicators turning them into datavalues.
  */
 function OutletRegistrator(conf) {
-	
-	//get api version
-    var apiVersion="";
-	
-    if (typeof(conf.apiVersion)!="undefined" && conf.apiVersion!="") apiVersion="/"+conf.apiVersion;
-	
+		
     //used endpoints
     this.endpoints = {
         
-        EVENTS: apiVersion+"/events.json?orgUnit=[ROOT]&ouMode=DESCENDANTS&program=[PROGRAM]&startDate=",
-        EDITEVENTS: apiVersion+"/events/[EVENT]",
-        ORGUNITS: apiVersion+"/organisationUnits/[PARENT].json?includeChildren=true",
-        DATAVALUESETS: apiVersion+"/dataValueSets",
-        ORGUNIT: apiVersion+"/organisationUnits/",
-        ORGUNITGROUPORGUNIT: apiVersion+"/organisationUnitGroups/[OUGROUP]/organisationUnits/[ORGUNIT]",
-        ORGUNITDATASET: apiVersion+"/organisationUnits/[ORGUNIT]/dataSets/[DATASET]",
-        ORGUNITPROGRAM: apiVersion+"/organisationUnits/[ORGUNIT]/programs/[PROGRAM]",
-        OUTLETTYPE: apiVersion+"/organisationUnitGroups?filter=name:eq:[OUTLETTYPE]",
-        USERSFILTER: apiVersion+"/userCredentials?fields=id,username,userInfo&filter=username:eq:[USERNAME]",
-        USERORGUNITS: apiVersion+"/users/[USER]/organisationUnits/[ORGUNIT]"
+        EVENTS: "/events.json?orgUnit=[ROOT]&ouMode=DESCENDANTS&program=[PROGRAM]&startDate=",
+        EDITEVENTS: "/events/[EVENT]",
+        ORGUNITS: "/organisationUnits/[PARENT].json?includeChildren=true",
+        DATAVALUESETS: "/dataValueSets",
+        ORGUNIT: "/organisationUnits/",
+        ORGUNITGROUPORGUNIT: "/organisationUnitGroups/[OUGROUP]/organisationUnits/[ORGUNIT]",
+        ORGUNITDATASET: "/organisationUnits/[ORGUNIT]/dataSets/[DATASET]",
+        ORGUNITPROGRAM: "/organisationUnits/[ORGUNIT]/programs/[PROGRAM]",
+        OUTLETTYPE: "/organisationUnitGroups?filter=name:eq:[OUTLETTYPE]",
+        USERSFILTER: "/userCredentials?fields=id,username,userInfo&filter=username:eq:[USERNAME]",
+        USERORGUNITS: "/users/[USER]/organisationUnits/[ORGUNIT]"
     };
     
     //This is the prefix of the Orgunit group names for Outlet Type
@@ -51,7 +46,7 @@ function OutletRegistrator(conf) {
         headers: {
             authorization: 'Basic ' + this.conf.auth,
         },
-        url: this.conf.protocol + "://" + this.conf.url
+        url: this.conf.protocol + "://" + this.conf.url + ((this.conf.apiVersion == "")?"":"/" +this.conf.apiVersion)
     }
     console.log("\nConfig:\n", JSON.stringify(this.conf, null, "\t"));
 };
