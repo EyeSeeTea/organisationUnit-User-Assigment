@@ -81,8 +81,8 @@ OutletRegistrator.prototype.loadLastEvents = function() {
         	return;
         }
         
-        _this.events.sort(function(a,b){
-        	return (a.eventDate > b.eventDate) ? 1 : ((b.eventDate > a.eventDate) ? -1 : 0);
+        _this.events.sort(function(event1, event2){
+        	return (event1.eventDate > event2.eventDate) ? 1 : ((event2.eventDate > event1.eventDate) ? -1 : 0);
         });
         
         _this.WaterfallPattern(_this.events, function(event) { _this.buildOrgUnit(event);},
@@ -206,7 +206,7 @@ OutletRegistrator.prototype.postOrgUnit = function(event) {
     //Prepare orgUnit
     var newOrgUnit = this.createOrgUnitFromEvent(event);
     //Post orgunit  
-    if (!this.ifValidOrgUnit(newOrgUnit)) {
+    if (!this.isValidOrgUnit(newOrgUnit)) {
         console.log("Compulsory fields have not been filled ",newOrgUnit);
         this.nextEvent();
         return
@@ -231,8 +231,7 @@ OutletRegistrator.prototype.createOrgUnitCode = function(parentCode,autoIncremen
  * @params coord [longitude, latitude] coordinates
  */
 OutletRegistrator.prototype.setupCoordiantes = function(coord) {
-    coordinates = [coord.longitude, coord.latitude];
-    return coordinates;
+    return [coord.longitude, coord.latitude]; 
 };
 
 /**
@@ -280,14 +279,7 @@ OutletRegistrator.prototype.createOrgUnitFromEvent = function(event) {
  * @params event
  */
 OutletRegistrator.prototype.getUserFromEvent = function(event) {
-    var dataValues = event.dataValues;
-    var username="";
-    
-    if (dataValues.length>0){
-    	username = event.dataValues[0].storedBy;
-    } 
-    
-    return username;
+    return event.dataValues.length>0 ? event.dataValues[0].storedBy : "";
 }
   
 
@@ -350,9 +342,9 @@ OutletRegistrator.prototype.decorateOrgUnit = function(newOrgUnit) {
 OutletRegistrator.prototype.addToOrgUnitGroup = function(newOrgUnit) {
     var _this=this;
 	
-    this.conf.organisationUnitGroups.forEach(function(ougId){
+    this.conf.organisationUnitGroups.forEach(function(orgUnitGroupId){
         var postInfo = _this.prepareOptions(_this.endpoints.ORGUNITGROUPORGUNIT);
-        postInfo.url = postInfo.url.replace("[OUGROUP]",ougId);
+        postInfo.url = postInfo.url.replace("[OUGROUP]",orgUnitGroupId);
         postInfo.url = postInfo.url.replace("[ORGUNIT]", newOrgUnit.uid);
         postInfo.json = true;
         request.post(postInfo, function(error, response, body){
@@ -537,12 +529,11 @@ OutletRegistrator.prototype.fillEventToUpdate = function(event) {
  * Check if the org. unit has all its compulsory fields filled
  * @param orgUnit
  */
-OutletRegistrator.prototype.ifValidOrgUnit = function(orgUnit) {
-    var validOrgUnit = true;
-    validOrgUnit = validOrgUnit && orgUnit.shortName!=null && orgUnit.shortName.trim()!="";
-    validOrgUnit = validOrgUnit && orgUnit.outletType!=null && orgUnit.outletType.trim()!="";
-    validOrgUnit = validOrgUnit && orgUnit.contactPerson!=null && orgUnit.contactPerson.trim()!="";
-    valirOrgUnit = validOrgUnit && orgUnit.address!=null && orgUnit.address.trim()!="";
+OutletRegistrator.prototype.isValidOrgUnit = function(orgUnit) {
+    
+    var validOrgUnit = orgUnit.shortName!=null && orgUnit.shortName.trim()!="" && orgUnit.outletType!=null && 
+    orgUnit.outletType.trim()!="" && orgUnit.contactPerson!=null && orgUnit.contactPerson.trim()!="" && 
+    orgUnit.address!=null && orgUnit.address.trim()!="";
     
     return validOrgUnit;
 }
@@ -553,14 +544,7 @@ OutletRegistrator.prototype.ifValidOrgUnit = function(orgUnit) {
  */
 OutletRegistrator.prototype.isAlreadyImported = function(event) {    
     var imported = this.findDataValue(event,this.conf.dataElements.alreadyImported);
-    
-    //Not found -> Not imported
-    if(imported === null){
-        return false;
-    }
-    
-    //To avoid parsing issues
-    return JSON.parse(imported);
+    return imported===null ? false : true;
 };
 
 /**

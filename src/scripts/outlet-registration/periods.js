@@ -33,33 +33,19 @@ function Periods(){
 Periods.prototype.buildPeriods = function(type,num){
     var periods = [];
     var periodConfig = this.config[type] || this.config[type.toLowerCase()];
-    //Error -> this should not happen
-    if(!periodConfig){
-        return periods;
-    }
     
-    var now = moment();
-    for (var i = 0; i < num; i++) {
-        //Format moment according to type
-        var formattedNow = now.format(periodConfig.format);
-        //Add moment to array
-        periods.push(formattedNow);
-        //Move backwards
-        now = now.add(-1, periodConfig.periodKey);
+    if (!periodConfig) {
+        var now = moment();
+        for (var i = 0; i < num; i++) {
+            //Format moment according to type and add moment to array
+            periods.push(now.format(periodConfig.format));
+            //Move backwards
+            now = now.add(-1, periodConfig.periodKey);
+        }
     }
     return periods;
 }
 
-/**
- * Returns a moment corresponding to:
- *  today - [num] [type]
- *  Ex: today -30 days
- *  @param type Type of time unit (day, week, month, year)
- *  @param num Number of days to 
- */
-Periods.prototype.moveTo = function(type,num){   
-    return moment().add(num, type);
-}
 
 /**
  * Returns a formatted string representing today - [num]
@@ -67,7 +53,7 @@ Periods.prototype.moveTo = function(type,num){
  *  @param num Number of days to move
  */
 Periods.prototype.moveAndFormatDay = function(num) {
-    return this.moveTo('day', num).format(this.config.daily.format);
+    return moment().add(num, 'day').format(this.config.daily.format); 
 }
 
 module.exports = new Periods();
