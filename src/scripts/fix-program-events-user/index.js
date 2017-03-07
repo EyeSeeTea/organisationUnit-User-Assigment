@@ -10,6 +10,8 @@ const nconf = require("nconf");
 
 const debug = (msg, ...args) => console.error(util.format("[DEBUG] " + msg, ...args));
 const toArray = (obj) => Array.isArray(obj) ? obj : [obj];
+const concurrent = (promises, mapper, concurrency = 5) =>
+  bluebird.map(promises, mapper, {concurrency: concurrency});
 
 class FixEventsCategoryOptions {
     constructor(options) {
@@ -28,10 +30,6 @@ class FixEventsCategoryOptions {
         const config = nconf.argv().file({file: configPath});
         const fixer = new FixEventsCategoryOptions(config.get());
         return fixer.run();
-    }
-
-    concurrent(promises, mapper, concurrency = 5) {
-        return bluebird.map(promises, mapper, {concurrency: concurrency});
     }
 
     request(uriPath, options = {}) {
@@ -81,7 +79,7 @@ class FixEventsCategoryOptions {
         return this.getUserIds().then(userIds =>
             bluebird.each(this.programs, programId =>
                 this.getProgramEvents(programId, this.fromDate).then(events =>
-                    this.concurrent(events, event => this.updateUserEvent(userIds, event)))));
+                    concurrent(events, event => this.updateUserEvent(userIds, event)))));
     }
 }
 
