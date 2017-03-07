@@ -1,16 +1,16 @@
 {
-  "name": "fix-events-category-options",
+  "name": "fix-program-events-users",
   "version": "1.0.0",
-  "description": "Set attributeCategoryOptions attribute from storeByUser for events",
+  "description": "Fix attributeCategoryOptions attribute for program events",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo 'Error: no test specified' && exit 1"
   },
   "dependencies": {
     "moment": "^2.15.2",
-    "request": "^2.75.0",
-    "request-promise": "*",
+    "request": "^2.34",
+    "request-promise": "^4.1.1",
     "underscore": "^1.8.3",
     "bluebird": "^3.5.0",
     "basic-authorization-header": "^0.2.7",
@@ -21,18 +21,11 @@
     "type": "git",
     "url": "git@github.com:EyeSeeTea/organisationUnit-User-Assigment.git"
   },
-  "engineStrict": true,
   "engines": {
     "node": ">=6.4.0"
   },
   "license": "GPL-3.0",
   "devDependencies": {
-    "eslint": "^3.17.1",
-    "eslint-config-airbnb-base": "^11.1.1",
-    "eslint-config-google": "^0.7.1",
-    "eslint-config-standard": "^7.0.0",
-    "eslint-plugin-import": "^2.2.0",
-    "eslint-plugin-promise": "^3.5.0",
-    "eslint-plugin-standard": "^2.1.1"
+    "eslint": "^3.17.1"
   }
 }

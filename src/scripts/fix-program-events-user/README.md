@@ -1,10 +1,17 @@
 = Description
 
-The attribute _attributeCategoryOptions_ for events does not hold the correct value. 
+The attribute _attributeCategoryOptions_ for program events may not hold the correct value. This script fixes this value for some configured programs and date range (see `config.json`). 
 
-This script fixes this value for some configured programs and date range (see `config.json`). For each event, the script takes the _storeBy_ attribute from the first item of the _dataValues_ section and uses the _api/categoryOptions_ to translate them to a _categoryOptionId_ value. 
+For each existing event, the script takes the _storedBy_ attribute from the first _dataValue_ and sets its corresponding _categoryOptionId_ . 
 
-= Examples
+= Setup
+
+```
+$ cd src/scripts/fix-program-events-user
+$ npm install
+```
+
+= Run
 
 * Run with the default configuration (uses `config.json`):
 
@@ -19,6 +26,14 @@ $ npm run start -- \
     --api:auth:username=admin \
     --api:auth:password=district
     --fromDate="-60" \
-    --programs=123 \
-    --programs=456
+    --programs=dfger232W \
+    --programs=r342WEF22
+```
+
+= Development
+
+Check code style with ESLint:
+
+```
+$ node_modules/.bin/eslint index.js
 ```
