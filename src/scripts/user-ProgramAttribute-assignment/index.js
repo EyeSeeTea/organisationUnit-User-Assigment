@@ -13,7 +13,7 @@ const toArray = (obj) => Array.isArray(obj) ? obj : [obj];
 const concurrent = (promises, mapper, concurrency = 5) =>
   bluebird.map(promises, mapper, {concurrency: concurrency});
 
-class userProgramAttributeAssignment {
+class UserProgramAttributeAssignment {
     constructor(options) {
         this.options = options;
         this.api_url = this.options.api.url;
@@ -28,7 +28,7 @@ class userProgramAttributeAssignment {
 
     static fromArgsAndConfigFile(configPath) {
         const config = nconf.argv().file({file: configPath});
-        const fixer = new userProgramAttributeAssignment(config.get());
+        const fixer = new UserProgramAttributeAssignment(config.get());
         return fixer.run();
     }
 
@@ -84,5 +84,5 @@ class userProgramAttributeAssignment {
 }
 
 if (require.main === module) {
-    userProgramAttributeAssignment.fromArgsAndConfigFile("config.json");
+    UserProgramAttributeAssignment.fromArgsAndConfigFile("config.json");
 }
