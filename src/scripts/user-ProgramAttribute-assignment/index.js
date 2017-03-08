@@ -44,8 +44,9 @@ class UserProgramAttributeAssignment {
 
     getUserIds() {
         debug("= Get categoryOptions to build dictionary {userCode: userId}");
+        let qs = {filter: "code:!null", fields: "id, code", paging: false};
         return this
-            .request("categoryOptions", {qs: {filter: "code:!null", fields: "id, code", paging: false}})
+            .request("categoryOptions", {qs: qs})
             .then(res => _.chain(res.categoryOptions).map(co => [co.code, co.id]).object().value());
     }
 
@@ -56,7 +57,8 @@ class UserProgramAttributeAssignment {
     }
 
     updateUserEvent(userIds, event) {
-        const username = event.dataValues.length > 0 ? event.dataValues[0].storedBy : null;
+        const username = event.dataValues && event.dataValues.length > 0 ? 
+          event.dataValues[0].storedBy : null;
         const categoryOptions = event.attributeCategoryOptions;
         const userId = userIds[username];
         const eventId = event.event;
