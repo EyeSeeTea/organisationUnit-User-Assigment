@@ -1,5 +1,5 @@
 {
-  "name": "fix-program-events-users",
+  "name": "user-ProgramAttribute-assignment",
   "version": "1.0.0",
   "description": "Fix attributeCategoryOptions attribute for program events",
   "main": "index.js",

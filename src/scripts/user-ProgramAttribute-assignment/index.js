@@ -13,7 +13,7 @@ const toArray = (obj) => Array.isArray(obj) ? obj : [obj];
 const concurrent = (promises, mapper, concurrency = 5) =>
   bluebird.map(promises, mapper, {concurrency: concurrency});
 
-class FixEventsCategoryOptions {
+class userProgramAttributeAssignment {
     constructor(options) {
         this.options = options;
         this.api_url = this.options.api.url;
@@ -28,7 +28,7 @@ class FixEventsCategoryOptions {
 
     static fromArgsAndConfigFile(configPath) {
         const config = nconf.argv().file({file: configPath});
-        const fixer = new FixEventsCategoryOptions(config.get());
+        const fixer = new userProgramAttributeAssignment(config.get());
         return fixer.run();
     }
 
@@ -84,5 +84,5 @@ class FixEventsCategoryOptions {
 }
 
 if (require.main === module) {
-    FixEventsCategoryOptions.fromArgsAndConfigFile("config.json");
+    userProgramAttributeAssignment.fromArgsAndConfigFile("config.json");
 }
