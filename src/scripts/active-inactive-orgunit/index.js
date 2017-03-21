@@ -199,9 +199,8 @@ OrganisationUnitActivator.prototype.processOrgUnitsByLevel = function (dataEleme
             " dataElements \n\t" +
             _this.organisationUnits.map(function (organisationUnit) { return organisationUnit.id }).join("\n\t")
         );
-
-        _this.prepareAndPushDataValues(_this.organisationUnits, dataElement);
         _this.asyncCalls--;
+        _this.prepareAndPushDataValues(_this.organisationUnits, dataElement);
     });
 };
 
@@ -233,8 +232,8 @@ OrganisationUnitActivator.prototype.processOrgUnitsByOrgUnitGroup = function (da
             " dataElements \n\t" +
             organisationUnits.map(function (organisationUnit) { return organisationUnit.id }).join("\n\t")
         );
-        _this.prepareAndPushDataValues(_this.organisationUnits, dataElement);
         _this.asyncCalls--;
+        _this.prepareAndPushDataValues(_this.organisationUnits, dataElement);
     });
 };
 
