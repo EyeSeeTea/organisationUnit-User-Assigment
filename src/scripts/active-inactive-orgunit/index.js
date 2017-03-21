@@ -97,7 +97,6 @@ OrganisationUnitActivator.prototype.processDataElementGroup = function (dataElem
             dataElements.map(function (dataElement) { return dataElement.id }).join("\n\t")
         );
 
-        _this.asyncCalls--;
         //Process every dataElements
         dataElements.forEach(function (dataElement) {
             dataElement.dataElementGroup = dataElementGroup;
@@ -105,6 +104,7 @@ OrganisationUnitActivator.prototype.processDataElementGroup = function (dataElem
             _this.prepareDataElement(dataElement);
             _this.processDataElements(dataElement);
         });
+        _this.asyncCalls--;
     });
 };
 
@@ -136,19 +136,18 @@ OrganisationUnitActivator.prototype.prepareDataElement = function (dataElement) 
  * Loads the organisationUnit for each dataelement.
  */
 OrganisationUnitActivator.prototype.processDataElements = function (dataElement) {
-    //Ask for 'DataElements'
-    var _this = this;
+    //Ask for 'DataElements' 
     if (dataElement.parent == undefined && dataElement.level == undefined) {
         if (dataElement.orgUnitGroup != undefined) {
             console.info("\nLoading orgUntis from orgUnitGroup " + dataElement.orgUnitGroup);
-            _this.processOrgUnitsByOrgUnitGroup(dataElement);
+            this.processOrgUnitsByOrgUnitGroup(dataElement);
         }
         else {
             console.error("\The dataelement  hasn't  organisationUnit " + dataElement.dataElementGroups);
         }
     } else {
         console.info("\nLoading orgUntis from parent: " + dataElement.parent + " level: " + dataElement.level);
-        _this.processOrgUnitsFromParentLevel(dataElement);
+        this.processOrgUnitsFromParentLevel(dataElement);
 
     }
 };
@@ -158,7 +157,7 @@ OrganisationUnitActivator.prototype.processDataElements = function (dataElement)
  * Loads the organisationUnit parent using the parent attribute, and loads the organisationUnit by level.
  */
 OrganisationUnitActivator.prototype.processOrgUnitsFromParentLevel = function (dataElement) {
-    //Ask for 'Organisation Units'
+    //Ask for 'Organisation Units' 
     var _this = this;
     var endpoint = this.endpoints.ORGANISATION_UNITS_BY_UID.replace("UID", dataElement.parent);
     var url = this.prepareOptions(endpoint);
@@ -170,11 +169,10 @@ OrganisationUnitActivator.prototype.processOrgUnitsFromParentLevel = function (d
                 error);
             _this.asyncCalls--;
             return;
-        }
-        _this.level = JSON.parse(body).level;
-        dataElement.parentLevel = _this.level;
-        _this.asyncCalls--;
+        } 
+        dataElement.parentLevel = JSON.parse(body).level;
         _this.processOrgUnitsByLevel(dataElement);
+        _this.asyncCalls--;
     });
 };
 
@@ -182,7 +180,7 @@ OrganisationUnitActivator.prototype.processOrgUnitsFromParentLevel = function (d
  * Loads the organisationUnit by level, and prepares the DataSet.
  */
 OrganisationUnitActivator.prototype.processOrgUnitsByLevel = function (dataElement) {
-    //Ask for 'Organisation Units' by level
+    //Ask for 'Organisation Units' by level 
     var _this = this;
     var endpoint = this.endpoints.ORGANISATION_UNITS_BY_PARENT_AND_LEVEL.replace("UID", dataElement.parent);
     endpoint = endpoint.replace("LEVELVALUE", dataElement.level - dataElement.parentLevel);
@@ -204,8 +202,8 @@ OrganisationUnitActivator.prototype.processOrgUnitsByLevel = function (dataEleme
             _this.organisationUnits.map(function (organisationUnit) { return organisationUnit.id }).join("\n\t")
         );
 
-        _this.asyncCalls--;
         _this.prepareAndPushDataValues(_this.organisationUnits, dataElement);
+        _this.asyncCalls--;
     });
 };
 
@@ -214,7 +212,7 @@ OrganisationUnitActivator.prototype.processOrgUnitsByLevel = function (dataEleme
  * Loads the organisationUnit using the OrgUnitGroup attribute, and prepare the DataSet.
  */
 OrganisationUnitActivator.prototype.processOrgUnitsByOrgUnitGroup = function (dataElement) {
-    //Ask for 'Organisation Units'
+    //Ask for 'Organisation Units' 
     var _this = this;
     var endpoint = this.endpoints.ORGANISATION_UNITS_BY_ORGANISATION_UNIT_GROUP.replace("UID", dataElement.orgUnitGroup);
     var url = this.prepareOptions(endpoint);
@@ -238,8 +236,8 @@ OrganisationUnitActivator.prototype.processOrgUnitsByOrgUnitGroup = function (da
             " dataElements \n\t" +
             organisationUnits.map(function (organisationUnit) { return organisationUnit.id }).join("\n\t")
         );
-        _this.asyncCalls--;
         _this.prepareAndPushDataValues(_this.organisationUnits, dataElement);
+        _this.asyncCalls--;
     });
 };
 
@@ -252,22 +250,20 @@ OrganisationUnitActivator.prototype.prepareAndPushDataValues = function (organis
     });
     if (this.asyncCalls <= 0) {
         console.log("Pushing dataValues");
-        _this.postDataValues(_this.buildDataValues(_this.dataValues), dataElement.dataElementGroup);
+        this.pushDataValues(this.buildDataValues(this.dataValues), dataElement.dataElementGroup);
         console.log("Pushed dataValues from " + dataElement.dataElementGroup + " pushed");
     }
 };
 /**
  * Prepares and pushes the dataSet.
  */
-OrganisationUnitActivator.prototype.prepareDataSet = function (orgUnit, dataElement) {
-    var _this = this;
-
+OrganisationUnitActivator.prototype.prepareDataSet = function (orgUnit, dataElement) {  
     //Parse dhis dates.
     if (orgUnit.closedDate != undefined) {
-        orgUnit.closedDate = _this.parseDateFromDhis(orgUnit.closedDate);
+        orgUnit.closedDate = this.parseDateFromDhis(orgUnit.closedDate);
     }
     if (orgUnit.openingDate != undefined) {
-        orgUnit.openingDate = _this.parseDateFromDhis(orgUnit.openingDate);
+        orgUnit.openingDate = this.parseDateFromDhis(orgUnit.openingDate);
     }
 
     var today = new Date();
@@ -277,25 +273,32 @@ OrganisationUnitActivator.prototype.prepareDataSet = function (orgUnit, dataElem
         var fixDate = i;
         var date = new Date();
         date.setMonth(((date.getMonth()) - fixDate));//get the period date
+        var firstPeriodDate = new Date();
+        firstPeriodDate.setMonth(((date.getMonth()) - parseInt(dataElement.periods)));//get the period date
         var dateAsPeriod = this.parseDateToPeriodFormat(date);
-        if (orgUnit.closedDate != undefined && (orgUnit.closedDate.getTime() < date.getTime() && dateAsPeriod != this.parseDateToPeriodFormat(orgUnit.closedDate))) {
-            //if the closed date exists and is previous and not equals than the period date: the orgUnit is inactive
-            row = { "dataElement": dataElement.id, "period": dateAsPeriod, "orgUnit": orgUnit.id, "value": 0 };
-
-            if (orgUnit.closedDate.getTime() < orgUnit.openingDate.getTime() &&
-                (orgUnit.openingDate.getTime() < date.getTime() || this.parseDateToPeriodFormat(orgUnit.openingDate) == dateAsPeriod)) {
-                //but if the closed date is previous than the opening date, 
-                //and if the opening date is previous or in the same year and month than the date, it is active
-                row = { "dataElement": dataElement.id, "period": dateAsPeriod, "orgUnit": orgUnit.id, "value": 1 };
-            }
-        } else {
-            //The org unit is active if the closdeDate is undefined  or the period is previous or equals than the closed date
+        var firstDateAsPeriod = this.parseDateToPeriodFormat(firstPeriodDate);
+        if (orgUnit.closedDate == undefined) {
+            //If closedDate does not exist then All Periods are Active
             row = { "dataElement": dataElement.id, "period": dateAsPeriod, "orgUnit": orgUnit.id, "value": 1 };
         }
+        else if (orgUnit.closedDate.getTime() < firstPeriodDate.getTime() &&
+            (orgUnit.openingDate != undefined && orgUnit.openingDate.getTime() < orgUnit.closedDate.getTime())) {
+            //If closedDate is previous than the first period and the openingDate is previous than the closedDate then All Periods are Inactive
+            row = { "dataElement": dataElement.id, "period": dateAsPeriod, "orgUnit": orgUnit.id, "value": 0 };
+        } else if (date.getTime() < orgUnit.closedDate.getTime() || dateAsPeriod == this.parseDateToPeriodFormat(orgUnit.closedDate)) {
+            //In any other case the periods previous than the closedDate (including the same month) are Active and the later periods are Inactive (unless we find an openingDate).
+            row = { "dataElement": dataElement.id, "period": dateAsPeriod, "orgUnit": orgUnit.id, "value": 1 };
+        } else {
+            row = { "dataElement": dataElement.id, "period": dateAsPeriod, "orgUnit": orgUnit.id, "value": 0 };
+            if (orgUnit.closedDate.getTime() < orgUnit.openingDate.getTime() && orgUnit.openingDate.getTime() < date.getTime()) {
+                row = { "dataElement": dataElement.id, "period": dateAsPeriod, "orgUnit": orgUnit.id, "value": 1 };
+            }
+        } 
+
         console.info("dataElement uid:" + dataElement.id + " period " + dateAsPeriod + " - " + i + " OrgUnit uid: " + orgUnit.id + " value " + row.value);
 
-        //Add the row to the dataValues array
-        _this.dataValues.push(row);
+        //push the row into the dataValues array
+        this.dataValues.push(row);
     }
 
 }
@@ -304,7 +307,6 @@ OrganisationUnitActivator.prototype.prepareDataSet = function (orgUnit, dataElem
  * Build the dataValues
  */
 OrganisationUnitActivator.prototype.buildDataValues = function (rows) {
-    var _this = this;
     var dataValues = rows.map(value => {
         return {
             "dataElement": value.dataElement,
@@ -320,8 +322,9 @@ OrganisationUnitActivator.prototype.buildDataValues = function (rows) {
 /**
  * Post datavalues to server
  * @param dataValues The dataValues that will be posted
+* @param dataElementGroup The dataElementGroup of the dataElements used to show a api url
  */
-OrganisationUnitActivator.prototype.postDataValues = function (dataValues, dataElementGroup) {
+OrganisationUnitActivator.prototype.pushDataValues = function (dataValues, dataElementGroup) {
     console.log("Push dataValues");
     var _this = this;
     var postInfo = this.prepareOptions(this.endpoints.DATAVALUE_SETS);
@@ -334,7 +337,7 @@ OrganisationUnitActivator.prototype.postDataValues = function (dataValues, dataE
             return;
         }
         console.log("Values posted OK, summary", JSON.stringify(body, null, "\t"));
-        console.log("Check in url(first orgunit): ", _this.requestOptions.url + _this.endpoints.DATAVALUES_RESULT.replace("ORGUNIT", dataValues.dataValues[0].orgUnit).replace("DATAELEMENTGROUP", dataElementGroup));
+        console.info("Check in url(first orgunit): ", _this.requestOptions.url + _this.endpoints.DATAVALUES_RESULT.replace("ORGUNIT", dataValues.dataValues[0].orgUnit).replace("DATAELEMENTGROUP", dataElementGroup));
     });
 }
 
