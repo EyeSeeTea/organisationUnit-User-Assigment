@@ -42,7 +42,7 @@ function OrganisationUnitActivator(conf) {
         url: conf.api.protocol + "://" + conf.api.url
     }
 
-    //asyncalls is used to detect if all the the request was resolved
+    //this variable is used to control if there are pending asynchronous calls to the server
     this.asyncCalls = 0;
 
     console.log("\nConfig:\n", JSON.stringify(conf, null, "\t"));
@@ -78,7 +78,7 @@ OrganisationUnitActivator.prototype.prepareOptions = function (endpoint) {
  * Prepares the data Elements and loads the organisationUnits for each dataelement in a given data element group
  */
 OrganisationUnitActivator.prototype.processDataElementGroup = function (dataElementGroup) {
-    //Ask for 'DataElements'
+    console.log("\nLoading dataElements...");
     var _this = this;
     var endpoint = this.endpoints.DATAELEMENTGROUP.replace("UID", dataElementGroup);
     var url = this.prepareOptions(endpoint);
@@ -136,7 +136,7 @@ OrganisationUnitActivator.prototype.prepareDataElement = function (dataElement) 
  * Loads the organisationUnit for each dataelement.
  */
 OrganisationUnitActivator.prototype.processDataElements = function (dataElement) {
-    //Ask for 'DataElements' 
+    console.log("\nLoading organisationUnits...");
     if (dataElement.parent == undefined && dataElement.level == undefined) {
         if (dataElement.orgUnitGroup != undefined) {
             console.info("\nLoading orgUntis from orgUnitGroup " + dataElement.orgUnitGroup);
@@ -157,11 +157,10 @@ OrganisationUnitActivator.prototype.processDataElements = function (dataElement)
  * Loads the organisationUnit parent using the parent attribute, and loads the organisationUnit by level.
  */
 OrganisationUnitActivator.prototype.processOrgUnitsFromParentLevel = function (dataElement) {
-    //Ask for 'Organisation Units' 
     var _this = this;
     var endpoint = this.endpoints.ORGANISATION_UNITS_BY_UID.replace("UID", dataElement.parent);
     var url = this.prepareOptions(endpoint);
-    console.log(url);
+    console.info(url);
     this.asyncCalls++;
     request(url, function (error, response, body) {
         if (error != undefined) {
@@ -169,7 +168,7 @@ OrganisationUnitActivator.prototype.processOrgUnitsFromParentLevel = function (d
                 error);
             _this.asyncCalls--;
             return;
-        } 
+        }
         dataElement.parentLevel = JSON.parse(body).level;
         _this.processOrgUnitsByLevel(dataElement);
         _this.asyncCalls--;
@@ -180,12 +179,11 @@ OrganisationUnitActivator.prototype.processOrgUnitsFromParentLevel = function (d
  * Loads the organisationUnit by level, and prepares the DataSet.
  */
 OrganisationUnitActivator.prototype.processOrgUnitsByLevel = function (dataElement) {
-    //Ask for 'Organisation Units' by level 
     var _this = this;
     var endpoint = this.endpoints.ORGANISATION_UNITS_BY_PARENT_AND_LEVEL.replace("UID", dataElement.parent);
     endpoint = endpoint.replace("LEVELVALUE", dataElement.level - dataElement.parentLevel);
     var url = this.prepareOptions(endpoint);
-    console.log(url);
+    console.info(url);
     this.asyncCalls++;
     request(url, function (error, response, body) {
         if (error != undefined) {
@@ -212,11 +210,10 @@ OrganisationUnitActivator.prototype.processOrgUnitsByLevel = function (dataEleme
  * Loads the organisationUnit using the OrgUnitGroup attribute, and prepare the DataSet.
  */
 OrganisationUnitActivator.prototype.processOrgUnitsByOrgUnitGroup = function (dataElement) {
-    //Ask for 'Organisation Units' 
     var _this = this;
     var endpoint = this.endpoints.ORGANISATION_UNITS_BY_ORGANISATION_UNIT_GROUP.replace("UID", dataElement.orgUnitGroup);
     var url = this.prepareOptions(endpoint);
-    console.log(url);
+    console.info(url);
     this.asyncCalls++;
     request(url, function (error, response, body) {
         if (error != undefined) {
@@ -243,22 +240,23 @@ OrganisationUnitActivator.prototype.processOrgUnitsByOrgUnitGroup = function (da
 
 
 OrganisationUnitActivator.prototype.prepareAndPushDataValues = function (organisationUnits, dataElement) {
-    //Ask for 'Organisation Units'
+    console.log("\nPreparing dataValues");
     var _this = this;
     organisationUnits.forEach(function (organisationUnit) {
         _this.prepareDataSet(organisationUnit, dataElement);
     });
+    console.info("\nPending asyncalls: " + this.asyncCalls);
     if (this.asyncCalls <= 0) {
         console.log("Pushing dataValues");
         this.pushDataValues(this.buildDataValues(this.dataValues), dataElement.dataElementGroup);
-        console.log("Pushed dataValues from " + dataElement.dataElementGroup + " pushed");
+        console.log("The dataValues created from the dataElementGroup " + dataElement.dataElementGroup + " was pushed");
     }
 };
 /**
  * Prepares and pushes the dataSet.
  */
-OrganisationUnitActivator.prototype.prepareDataSet = function (orgUnit, dataElement) {  
-    //Parse dhis dates.
+OrganisationUnitActivator.prototype.prepareDataSet = function (orgUnit, dataElement) {
+    //Parse the server dates.
     if (orgUnit.closedDate != undefined) {
         orgUnit.closedDate = this.parseDateFromDhis(orgUnit.closedDate);
     }
@@ -268,13 +266,13 @@ OrganisationUnitActivator.prototype.prepareDataSet = function (orgUnit, dataElem
 
     var today = new Date();
     today.setMonth(((today.getMonth() + 1) - parseInt(dataElement.periods)));
-    for (var i = parseInt(dataElement.periods); i > 0; i--) {// i > 0 skipes the current period
+    for (var i = parseInt(dataElement.periods); i > 0; i--) {// i > 0 skipes the current period change to 
         var row;
         var fixDate = i;
         var date = new Date();
-        date.setMonth(((date.getMonth()) - fixDate));//get the period date
+        date.setMonth(((date.getMonth()) - fixDate));//get the actual period date
         var firstPeriodDate = new Date();
-        firstPeriodDate.setMonth(((date.getMonth()) - parseInt(dataElement.periods)));//get the period date
+        firstPeriodDate.setMonth(((date.getMonth()) - parseInt(dataElement.periods)));//get the first period date
         var dateAsPeriod = this.parseDateToPeriodFormat(date);
         var firstDateAsPeriod = this.parseDateToPeriodFormat(firstPeriodDate);
         if (orgUnit.closedDate == undefined) {
@@ -293,7 +291,7 @@ OrganisationUnitActivator.prototype.prepareDataSet = function (orgUnit, dataElem
             if (orgUnit.closedDate.getTime() < orgUnit.openingDate.getTime() && orgUnit.openingDate.getTime() < date.getTime()) {
                 row = { "dataElement": dataElement.id, "period": dateAsPeriod, "orgUnit": orgUnit.id, "value": 1 };
             }
-        } 
+        }
 
         console.info("dataElement uid:" + dataElement.id + " period " + dateAsPeriod + " - " + i + " OrgUnit uid: " + orgUnit.id + " value " + row.value);
 
@@ -322,10 +320,9 @@ OrganisationUnitActivator.prototype.buildDataValues = function (rows) {
 /**
  * Post datavalues to server
  * @param dataValues The dataValues that will be posted
-* @param dataElementGroup The dataElementGroup of the dataElements used to show a api url
+ * @param dataElementGroup The dataElementGroup of the dataElements pushed, it is used to show a api url
  */
 OrganisationUnitActivator.prototype.pushDataValues = function (dataValues, dataElementGroup) {
-    console.log("Push dataValues");
     var _this = this;
     var postInfo = this.prepareOptions(this.endpoints.DATAVALUE_SETS);
     postInfo.json = true;
@@ -351,7 +348,7 @@ OrganisationUnitActivator.prototype.parseDateToPeriodFormat = function (date) {
 }
 
 /**
- * Parse the server date vale to javascript date value.
+ * Parse the server date value to javascript date value.
  */
 OrganisationUnitActivator.prototype.parseDateFromDhis = function (dateAsString) {
     var parseDate = new Date();
