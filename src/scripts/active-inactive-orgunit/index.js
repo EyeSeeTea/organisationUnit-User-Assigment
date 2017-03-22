@@ -233,7 +233,7 @@ OrganisationUnitActivator.prototype.processOrgUnitsByOrgUnitGroup = function (da
             organisationUnits.map(function (organisationUnit) { return organisationUnit.id }).join("\n\t")
         );
         _this.asyncCalls--;
-        _this.prepareAndPushDataValues(_this.organisationUnits, dataElement);
+        _this.prepareAndPushDataValues(organisationUnits, dataElement);
     });
 };
 
