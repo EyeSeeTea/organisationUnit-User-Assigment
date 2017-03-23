@@ -7,12 +7,11 @@
       "password": "district"
     }
   },
-	"attributes": {
-		"level": "Dci7UEL1fsO",
-		"parent": "BF3XnPHZGEM",
-		"orgUnitGroup": "IvH9OP1INZu",
+  "attributes": {
+    "level": "Dci7UEL1fsO",
+    "parent": "BF3XnPHZGEM",
+    "orgUnitGroup": "IvH9OP1INZu",
     "period": "GYVtN5RxY3W"
-	},
-  "dataElementGroup":
-    "VZuTpbPy1L9"
+  },
+  "dataElementGroup": "VZuTpbPy1L9"
 }
