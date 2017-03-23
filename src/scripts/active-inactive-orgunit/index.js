@@ -11,7 +11,6 @@ fs.readFile('config.json', 'utf8', function (err, conf) {
     organisationUnitActivator.run();
 });
 
-
 /**
  * This class activate the inactive organisation Units for a given dataElementGroup.
  */
@@ -46,7 +45,6 @@ function OrganisationUnitActivator(conf) {
 
     //this variable is used to control if there are pending asynchronous calls to the server
     this.asyncCalls = 0;
-
     console.log("\nConfig:\n", JSON.stringify(conf, null, "\t"));
 };
 
@@ -87,6 +85,7 @@ OrganisationUnitActivator.prototype.processDataElementGroup = function (dataElem
             _this.asyncCalls--;
             return;
         }
+
         var dataElements = JSON.parse(body).dataElements;
         console.info("Found " +
             dataElements.length +
@@ -111,7 +110,6 @@ OrganisationUnitActivator.prototype.processDataElementGroup = function (dataElem
 @param dataElement The active dataElement
  */
 OrganisationUnitActivator.prototype.prepareDataElement = function (dataElement) {
-
     var attributeUids = this.attributeUids;
     console.log("\nPreparing dataElement:" + dataElement.id);
     dataElement.attributeValues.forEach(function (attributeValue) {
@@ -136,7 +134,6 @@ OrganisationUnitActivator.prototype.prepareDataElement = function (dataElement) 
     return true;
 };
 
-
 /**
  * Loads the organisationUnit for each dataelement.
     @param dataElement The active dataElement
@@ -151,7 +148,6 @@ OrganisationUnitActivator.prototype.processDataElements = function (dataElement,
         this.processOrgUnitsFromParentLevel(dataElement, dataValues);
     }
 };
-
 
 /**
  * Loads the organisationUnit parent using the parent attribute, and loads the organisationUnit by level.
@@ -219,6 +215,7 @@ OrganisationUnitActivator.prototype.processOrgUnitResponse = function (error, re
         this.asyncCalls--;
         return;
     }
+
     console.info("Response body: ", body);
     var organisationUnits = JSON.parse(body).organisationUnits;
     if (organisationUnits == undefined) {
@@ -231,6 +228,7 @@ OrganisationUnitActivator.prototype.processOrgUnitResponse = function (error, re
         " dataElements \n\t" +
         organisationUnits.map(function (organisationUnit) { return organisationUnit.id }).join("\n\t")
     );
+
     this.prepareDataValues(organisationUnits, dataElement, dataValues);
     this.asyncCalls--;
     this.pushDataValues(dataValues);
@@ -352,6 +350,7 @@ OrganisationUnitActivator.prototype.push = function (dataValues) {
                 error);
             return;
         }
+
         console.log("Values posted OK, summary", JSON.stringify(body, null, "\t"));
         console.info("Check in url(first orgunit): ", _this.requestOptions.url + _this.endpoints.DATAVALUES_RESULT.replace("ORGUNIT", dataValues.dataValues[0].orgUnit).replace("DATAELEMENTGROUP", _this.dataElementGroup));
     });

@@ -1,8 +1,10 @@
 ﻿/**
- * Utils to format classes to the correct format
+ * Class used to parse date to the required format
  */
+
 function DateFormatter() {
 }
+
 /**
  * Parse the date to a period format "yyyymm"
  */
@@ -26,4 +28,5 @@ DateFormatter.prototype.parseDateFromDhis = function (dateAsString) {
     var n = parseDate.toString();
     return parseDate;
 }
+
 module.exports = new DateFormatter();
