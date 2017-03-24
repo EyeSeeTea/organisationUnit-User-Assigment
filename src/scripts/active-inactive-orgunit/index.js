@@ -54,13 +54,13 @@ function OrganisationUnitActivator(conf) {
 OrganisationUnitActivator.prototype.run = function () {
     console.log("\nLoading script..."); 
     //Process the dataElement group 
-    var dataValues = [];  
-    this.processDataElementGroup(this.dataElementGroup, dataValues); 
+    this.processDataElementGroup(); 
 };
 
 /**
- * Returns an object with url and auth info for the given endpoint
+ * Prepare the options to make the server request.
  * @param endpoint The endpoint with the params included
+ * @return an object with url and auth info for the given endpoint
  */
 OrganisationUnitActivator.prototype.prepareOptions = function (endpoint) {
     var options = Object.assign({}, this.requestOptions);
@@ -70,12 +70,11 @@ OrganisationUnitActivator.prototype.prepareOptions = function (endpoint) {
 
 /**
  * Prepares the data Elements and loads the organisationUnits for each dataelement in a given data element group
-@param dataElement The active dataElement
  */
-OrganisationUnitActivator.prototype.processDataElementGroup = function (dataElementGroup, dataValues) {
+OrganisationUnitActivator.prototype.processDataElementGroup = function () {
     console.log("\nLoading dataElements...");
     var _this = this;
-    var endpoint = this.endpoints.DATAELEMENTGROUP.replace("UID", dataElementGroup);
+    var endpoint = this.endpoints.DATAELEMENTGROUP.replace("UID", this.dataElementGroup);
     var url = this.prepareOptions(endpoint);
     console.info("Request the dataelements from a dataelementgroup ", "URL: " + url.url);
     this.asyncCalls++
@@ -93,11 +92,12 @@ OrganisationUnitActivator.prototype.processDataElementGroup = function (dataElem
             dataElements.map(function (dataElement) { return dataElement.id }).join("\n\t")
         );
 
+        var dataValues = [];  
         //Process every dataElements
         dataElements.forEach(function (dataElement) { 
-            console.info("\nConfig:\n", JSON.stringify(dataElement, null, "\t"));
-            var isDataElementValid = _this.prepareDataElement(dataElement);
-            if (isDataElementValid) {
+            console.info("\nConfig:\n", JSON.stringify(dataElement, null, "\t")); 
+            _this.prepareDataElement(dataElement)
+            if (_this.checkDataElement(dataElement)) {
                 _this.processDataElements(dataElement, dataValues);
             }
         });
@@ -106,52 +106,61 @@ OrganisationUnitActivator.prototype.processDataElementGroup = function (dataElem
 };
 
 /**
- * Builds the dataElement attributes
-@param dataElement The active dataElement
+ * Checks if the prepared dataelement is valid
+ * @param dataElement The active dataElement 
+ * @return if the dataElement is valid or invalid
  */
-OrganisationUnitActivator.prototype.prepareDataElement = function (dataElement) {
-    var attributeUids = this.attributeUids;
-    console.log("\nPreparing dataElement:" + dataElement.id);
-    dataElement.attributeValues.forEach(function (attributeValue) {
-        if (attributeValue.attribute.id == attributeUids.LEVEL) {
-            dataElement.level = attributeValue.value;
-        }
-        if (attributeValue.attribute.id == attributeUids.PARENT) {
-            dataElement.parent = attributeValue.value;
-        }
-        if (attributeValue.attribute.id == attributeUids.ORGUNITGROUP) {
-            dataElement.orgUnitGroup = attributeValue.value;
-        }
-        if (attributeValue.attribute.id == attributeUids.PERIOD) {
-            dataElement.periods = attributeValue.value;
-        }
-    });
-
+OrganisationUnitActivator.prototype.checkDataElement = function (dataElement) {
     if ((dataElement.parent == undefined || dataElement.level == undefined) && dataElement.orgUnitGroup == undefined) {
-        console.error("Invalid dataElement organisation unit attributes", " DataElement:" + dataElement.id);
+        console.error("Invalid dataElement organisation unit attributes DataElement:" + dataElement.id);
         return false;
     }
     return true;
 };
 
 /**
+ * Builds the dataElement attributes
+ * @param dataElement The active dataElement
+ */
+OrganisationUnitActivator.prototype.prepareDataElement = function (dataElement) {
+    var _this = this; 
+    console.log("\nPreparing dataElement:" + dataElement.id);
+    dataElement.attributeValues.forEach(function (attributeValue) {
+        if (attributeValue.attribute.id == _this.attributeUids.LEVEL) {
+            dataElement.level = attributeValue.value;
+        }
+        if (attributeValue.attribute.id == _this.attributeUids.PARENT) {
+            dataElement.parent = attributeValue.value;
+        }
+        if (attributeValue.attribute.id == _this.attributeUids.ORGUNITGROUP) {
+            dataElement.orgUnitGroup = attributeValue.value;
+        }
+        if (attributeValue.attribute.id == _this.attributeUids.PERIOD) {
+            dataElement.periods = attributeValue.value;
+        }
+    });
+};
+
+/**
  * Loads the organisationUnit for each dataelement.
-    @param dataElement The active dataElement
+ * @param dataElement The active dataElement
+ * @param dataValues array to add all the datavalues row of the given dataElementgroup
  */
 OrganisationUnitActivator.prototype.processDataElements = function (dataElement, dataValues) {
     console.log("\nLoading organisationUnits...");
     if (dataElement.orgUnitGroup != undefined) {
-        console.info("\nLoading orgUntis from orgUnitGroup " + dataElement.orgUnitGroup);
+        console.info("\nLoading orgUnits from orgUnitGroup " + dataElement.orgUnitGroup);
         this.processOrgUnitsByOrgUnitGroup(dataElement, dataValues);
     } else {
-        console.info("\nLoading orgUntis from parent: " + dataElement.parent + " level: " + dataElement.level);
+        console.info("\nLoading orgUnits from parent: " + dataElement.parent + " level: " + dataElement.level);
         this.processOrgUnitsFromParentLevel(dataElement, dataValues);
     }
 };
 
 /**
  * Loads the organisationUnit parent using the parent attribute, and loads the organisationUnit by level.
-@param dataElement The active dataElement
+ * @param dataElement The active dataElement
+ * @param dataValues array to add all the datavalues row of the given dataElementgroup
  */
 OrganisationUnitActivator.prototype.processOrgUnitsFromParentLevel = function (dataElement, dataValues) {
     var _this = this;
@@ -174,7 +183,8 @@ OrganisationUnitActivator.prototype.processOrgUnitsFromParentLevel = function (d
 
 /**
  * Loads the organisationUnit by level.
-@param dataElement The active dataElement
+ * @param dataElement The active dataElement
+ * @param dataValues array to add all the datavalues row of the given dataElementgroup
  */
 OrganisationUnitActivator.prototype.processOrgUnitsByLevel = function (dataElement, dataValues) {
     var _this = this;
@@ -189,7 +199,8 @@ OrganisationUnitActivator.prototype.processOrgUnitsByLevel = function (dataEleme
 
 /**
  * Loads the organisationUnit by orgUnit group
-@param dataElement The active dataElement
+ * @param dataElement The active dataElement
+ * @param dataValues array to add all the datavalues row of the given dataElementgroup
  */
 OrganisationUnitActivator.prototype.processOrgUnitsByOrgUnitGroup = function (dataElement, dataValues) {
     var _this = this;
@@ -204,9 +215,10 @@ OrganisationUnitActivator.prototype.processOrgUnitsByOrgUnitGroup = function (da
 
 /**
  * Process all the pull organisationUntis responses
-@param error Contains the error
-@param response Contains the response
-@param body Contains the body
+ * @param error Contains the error
+ * @param response Contains the response
+ * @param body Contains the body
+ * @param dataValues array to add all the datavalues row of the given dataElementgroup
  */
 OrganisationUnitActivator.prototype.processOrgUnitResponse = function (error, response, body, dataElement, dataValues) {
     if (error != undefined) {
@@ -236,8 +248,9 @@ OrganisationUnitActivator.prototype.processOrgUnitResponse = function (error, re
 
 /**
  * Loops all the organisation units and prepare their dataSets
-@param organisationUnits Contains all the organisationUntis
-@param dataElement It is the organisationUnit dataelement for this loop.
+ * @param organisationUnits Contains all the organisationUntis
+ * @param dataElement It is the organisationUnit dataelement for this loop.
+ * @param dataValues array to add all the datavalues row of the given dataElementgroup
  */
 OrganisationUnitActivator.prototype.prepareDataValues = function (organisationUnits, dataElement, dataValues) { 
     console.log("\nPreparing dataValues");
@@ -248,64 +261,53 @@ OrganisationUnitActivator.prototype.prepareDataValues = function (organisationUn
 };
 
 /**
- * Prepares the dataSet.*
-@param orgUnit Contains the organisation unit uid and the closed and opening dates used to set the orgUnit as active or inactive
-@param dataElement The dataelement to be pushed with this organisation Unit
+ * Prepares the dataSet. And add a row to the dataValues array.
+ * @param orgUnit Contains the organisation unit uid and the closed and opening dates used to set the orgUnit as active or inactive
+ * @param dataElement The dataelement to be pushed with this organisation Unit
+ * @param dataValues array to add all the datavalues row of the given dataElementgroup
 */
 OrganisationUnitActivator.prototype.prepareDataOrgUnitDataValues = function (orgUnit, dataElement, dataValues) {
-    //Parse the server dates.
-    if (orgUnit.closedDate != undefined) {
-        orgUnit.closedDate =  dateFormatter.parseDateFromDhis(orgUnit.closedDate);
-    }
-    if (orgUnit.openingDate != undefined) {
-        orgUnit.openingDate = dateFormatter.parseDateFromDhis(orgUnit.openingDate);
-    }
+    //Parse the server dates. 
+    orgUnit.closedDate =  dateFormatter.parseDateFromDhis(orgUnit.closedDate);
+    orgUnit.openingDate = dateFormatter.parseDateFromDhis(orgUnit.openingDate);
 
     var today = new Date();
     today.setMonth(((today.getMonth() + 1) - parseInt(dataElement.periods)));
-    
-    for (var fixDate = parseInt(dataElement.periods); fixDate > 0; fixDate--) {
-        var row; 
+    //Starting the fixDate variable in 1 skipes the current month
+    for (var fixDate = 1; fixDate < parseInt(dataElement.periods)+1; fixDate++) { 
         var date = new Date(); 
         //Fix the date to show the actual period date month
         date.setMonth(((date.getMonth()) - fixDate));
 
-        var firstPeriodDate = new Date(); 
-        firstPeriodDate.setMonth(((date.getMonth()) - parseInt(dataElement.periods)));
+        var row = { "dataElement": dataElement.id, "period": dateFormatter.parseDateToPeriodFormat(date), "orgUnit": orgUnit.id, "value": 0 };  
 
-        var dateAsPeriod = dateFormatter.parseDateToPeriodFormat(date);
-        row = { "dataElement": dataElement.id, "period": dateAsPeriod, "orgUnit": orgUnit.id, "value": "" };
-
-        var firstDateAsPeriod = dateFormatter.parseDateToPeriodFormat(firstPeriodDate);
-        if (orgUnit.closedDate == undefined) {
-            //If closedDate does not exist then All Periods are Active
-            row["value"] = 1; 
-        }
-        else if (orgUnit.closedDate.getTime() < firstPeriodDate.getTime() &&
-            (orgUnit.openingDate != undefined && orgUnit.openingDate.getTime() < orgUnit.closedDate.getTime())) {
-            //If closedDate is previous than the first period and the openingDate is previous than the closedDate then All Periods are Inactive 
-            row["value"] = 0; 
-        } else if (date.getTime() < orgUnit.closedDate.getTime() || dateAsPeriod == dateFormatter.parseDateToPeriodFormat(orgUnit.closedDate)) {
-            //In any other case the periods previous than the closedDate (including the same month) are Active and the later periods are Inactive (unless we find an openingDate).
+        if (orgUnit.closedDate == undefined
+            || dateFormatter.areDatePeriodsEquals(orgUnit.closedDate, date)) {
+            //If closedDate does not exist the orgUnit is active
             row["value"] = 1;
-        } else {
-            row["value"] = 0; 
-            if (orgUnit.closedDate.getTime() < orgUnit.openingDate.getTime() && orgUnit.openingDate.getTime() < date.getTime()) { 
-                row["value"] = 1; 
-            }
+        }
+        else if ((date.getTime() < orgUnit.closedDate.getTime() || dateFormatter.areDatePeriodsEquals(orgUnit.closedDate, date))) {
+            //if the closed Date is previous than the dateTime or the closeddate year and month is equals than the actual period year and month the orgunit is active
+                row["value"] = 1;
+            } 
+        else if (
+            (orgUnit.openingDate != undefined
+                && orgUnit.openingDate.getTime() > orgUnit.closedDate.getTime())
+            && orgUnit.openingDate.getTime() < date.getTime()) {
+            row["value"] = 1;
+            //if the closedDate is previous than the openingDate and the opening date is previous than the period date the orgunit is active
         }
 
-        console.info("Added new Dataperiod", "dataElement uid:" + dataElement.id + " period " + dateAsPeriod + " - " + fixDate + " OrgUnit uid: " + orgUnit.id + " value " + row.value);
+        console.info("Added new Dataperiod", "dataElement uid:" + row.dataElement + " period " + row.period + " - " + fixDate + " OrgUnit uid: " + row.orgUnit + " value " + row.value);
 
         //push the row into the dataValues array
         dataValues.push(row);
     }
-
 }
 
 /**
  * Push all the datavalues
- * @param dataElementGroup The dataElementGroup  is used show a correct debug info
+ * @param dataValues array that contains all the periods for each dataelement+organisation unit as rows
  */
 OrganisationUnitActivator.prototype.pushDataValues = function (dataValues) {
     console.info("\nPending asyncalls: " + this.asyncCalls);
@@ -318,7 +320,8 @@ OrganisationUnitActivator.prototype.pushDataValues = function (dataValues) {
 
 /**
  * Build the dataValues
- * @param rows A dataValue array cointaining all the periods for each dataelement+organisation unit
+ * @param rows A dataValue array cointaining all the periods for each dataelement+organisation unit 
+ * @return a valid Json datavalues
  */
 OrganisationUnitActivator.prototype.buildDataValues = function (rows) {
     var dataValues = rows.map(value => {
@@ -335,8 +338,7 @@ OrganisationUnitActivator.prototype.buildDataValues = function (rows) {
 
 /**
  * Post datavalues to server
- * @param dataValues The dataValues that will be posted
- * @param dataElementGroup The dataElementGroup of the dataElements pushed, it is used to show a api url
+ * @param dataValues The dataValues that will be posted 
  */
 OrganisationUnitActivator.prototype.push = function (dataValues) {
     var _this = this;
