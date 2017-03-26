@@ -1,7 +1,7 @@
 {
   "name": "active-inactive-orgunit",
   "version": "1.0.0",
-  "description": "Sets each DataSet's period as true or false from a dataElementGroup depending on OU start and end date'",
+  "description": "Sets each DataElement period as true or false from a dataElementGroup depending on OU start and end date'",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",

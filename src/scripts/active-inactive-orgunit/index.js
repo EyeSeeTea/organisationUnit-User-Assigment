@@ -12,7 +12,7 @@ fs.readFile('config.json', 'utf8', function (err, conf) {
 });
 
 /**
- * This class activate the inactive organisation Units for a given dataElementGroup.
+ * Main class
  */
 function OrganisationUnitActivator(conf) {
     this.endpoints = {
@@ -43,7 +43,7 @@ function OrganisationUnitActivator(conf) {
         url: conf.api.protocol + "://" + conf.api.url
     }
 
-    //this variable is used to control if there are pending asynchronous calls to the server
+    //counts asynchronous calls to the server
     this.asyncCalls = 0;
     console.log("\nConfig:\n", JSON.stringify(conf, null, "\t"));
 };
@@ -69,7 +69,7 @@ OrganisationUnitActivator.prototype.prepareOptions = function (endpoint) {
 }
 
 /**
- * Prepares the data Elements and loads the organisationUnits for each dataelement in a given data element group
+ * Prepare the data Elements and load the organisationUnits for each dataelement in a given data element group
  */
 OrganisationUnitActivator.prototype.processDataElementGroup = function () {
     console.log("\nLoading dataElements...");
@@ -86,18 +86,14 @@ OrganisationUnitActivator.prototype.processDataElementGroup = function () {
         }
 
         var dataElements = JSON.parse(body).dataElements;
-        console.info("Found " +
-            dataElements.length +
-            " dataElements \n\t" +
-            dataElements.map(function (dataElement) { return dataElement.id }).join("\n\t")
-        );
+        console.info("Found " + dataElements.length + " dataElements \n\t" + dataElements.map(function (dataElement) { return dataElement.id }).join("\n\t"));
 
         var dataValues = [];  
         //Process every dataElements
         dataElements.forEach(function (dataElement) { 
             console.info("\nConfig:\n", JSON.stringify(dataElement, null, "\t")); 
             _this.prepareDataElement(dataElement)
-            if (_this.checkDataElement(dataElement)) {
+            if (_this.isDataElementValid(dataElement)) {
                 _this.processDataElements(dataElement, dataValues);
             }
         });
@@ -106,11 +102,11 @@ OrganisationUnitActivator.prototype.processDataElementGroup = function () {
 };
 
 /**
- * Checks if the prepared dataelement is valid
+ * Check if the prepared dataelement is valid
  * @param dataElement The active dataElement 
  * @return if the dataElement is valid or invalid
  */
-OrganisationUnitActivator.prototype.checkDataElement = function (dataElement) {
+OrganisationUnitActivator.prototype.isDataElementValid = function (dataElement) {
     if ((dataElement.parent == undefined || dataElement.level == undefined) && dataElement.orgUnitGroup == undefined) {
         console.error("Invalid dataElement organisation unit attributes DataElement:" + dataElement.id);
         return false;
@@ -119,7 +115,7 @@ OrganisationUnitActivator.prototype.checkDataElement = function (dataElement) {
 };
 
 /**
- * Builds the dataElement attributes
+ * Build  dataElement attributes
  * @param dataElement The active dataElement
  */
 OrganisationUnitActivator.prototype.prepareDataElement = function (dataElement) {
@@ -129,20 +125,20 @@ OrganisationUnitActivator.prototype.prepareDataElement = function (dataElement) 
         if (attributeValue.attribute.id == _this.attributeUids.LEVEL) {
             dataElement.level = attributeValue.value;
         }
-        if (attributeValue.attribute.id == _this.attributeUids.PARENT) {
+        else if (attributeValue.attribute.id == _this.attributeUids.PARENT) {
             dataElement.parent = attributeValue.value;
         }
-        if (attributeValue.attribute.id == _this.attributeUids.ORGUNITGROUP) {
+        else if (attributeValue.attribute.id == _this.attributeUids.ORGUNITGROUP) {
             dataElement.orgUnitGroup = attributeValue.value;
         }
-        if (attributeValue.attribute.id == _this.attributeUids.PERIOD) {
+        else if (attributeValue.attribute.id == _this.attributeUids.PERIOD) {
             dataElement.periods = attributeValue.value;
         }
     });
 };
 
 /**
- * Loads the organisationUnit for each dataelement.
+ * Load the organisationUnit for each dataelement.
  * @param dataElement The active dataElement
  * @param dataValues array to add all the datavalues row of the given dataElementgroup
  */
@@ -158,7 +154,7 @@ OrganisationUnitActivator.prototype.processDataElements = function (dataElement,
 };
 
 /**
- * Loads the organisationUnit parent using the parent attribute, and loads the organisationUnit by level.
+ * Load the organisationUnit parent using the parent attribute and loads the organisationUnit by level.
  * @param dataElement The active dataElement
  * @param dataValues array to add all the datavalues row of the given dataElementgroup
  */
@@ -166,12 +162,11 @@ OrganisationUnitActivator.prototype.processOrgUnitsFromParentLevel = function (d
     var _this = this;
     var endpoint = this.endpoints.ORGANISATION_UNITS_BY_UID.replace("UID", dataElement.parent);
     var url = this.prepareOptions(endpoint);
-    console.info("Request the organisationUnit parent from parent attribute.", "URL: " + url.url);
+    console.info("Request the organisationUnit parent from parent attribute. URL: " + url.url);
     this.asyncCalls++;
     request(url, function (error, response, body) {
         if (error != undefined) {
-            console.error("Error loading orgUnit from parent and level",
-                error);
+            console.error("Error loading orgUnit from parent and level", error);
             _this.asyncCalls--;
             return;
         }
@@ -182,7 +177,7 @@ OrganisationUnitActivator.prototype.processOrgUnitsFromParentLevel = function (d
 };
 
 /**
- * Loads the organisationUnit by level.
+ * Load the organisationUnit by level.
  * @param dataElement The active dataElement
  * @param dataValues array to add all the datavalues row of the given dataElementgroup
  */
@@ -198,7 +193,7 @@ OrganisationUnitActivator.prototype.processOrgUnitsByLevel = function (dataEleme
 };
 
 /**
- * Loads the organisationUnit by orgUnit group
+ * Load the organisationUnit by orgUnit group
  * @param dataElement The active dataElement
  * @param dataValues array to add all the datavalues row of the given dataElementgroup
  */
@@ -214,10 +209,10 @@ OrganisationUnitActivator.prototype.processOrgUnitsByOrgUnitGroup = function (da
 };
 
 /**
- * Process all the pull organisationUntis responses
- * @param error Contains the error
- * @param response Contains the response
- * @param body Contains the body
+ * Process organisationUntis responses
+ * @param error 
+ * @param response 
+ * @param body 
  * @param dataValues array to add all the datavalues row of the given dataElementgroup
  */
 OrganisationUnitActivator.prototype.processOrgUnitResponse = function (error, response, body, dataElement, dataValues) {
@@ -235,11 +230,8 @@ OrganisationUnitActivator.prototype.processOrgUnitResponse = function (error, re
         this.asyncCalls--;
         return;
     }
-    console.info("Found " +
-        organisationUnits.length +
-        " dataElements \n\t" +
-        organisationUnits.map(function (organisationUnit) { return organisationUnit.id }).join("\n\t")
-    );
+    
+    console.info("Found " + organisationUnits.length + " dataElements \n\t" + organisationUnits.map(function (organisationUnit) { return organisationUnit.id }).join("\n\t"));
 
     this.prepareDataValues(organisationUnits, dataElement, dataValues);
     this.asyncCalls--;
@@ -247,9 +239,9 @@ OrganisationUnitActivator.prototype.processOrgUnitResponse = function (error, re
 }
 
 /**
- * Loops all the organisation units and prepare their dataSets
- * @param organisationUnits Contains all the organisationUntis
- * @param dataElement It is the organisationUnit dataelement for this loop.
+ * Loop over the organisation units and prepare dataSets
+ * @param organisationUnits 
+ * @param dataElement 
  * @param dataValues array to add all the datavalues row of the given dataElementgroup
  */
 OrganisationUnitActivator.prototype.prepareDataValues = function (organisationUnits, dataElement, dataValues) { 
@@ -261,7 +253,7 @@ OrganisationUnitActivator.prototype.prepareDataValues = function (organisationUn
 };
 
 /**
- * Prepares the dataSet. And add a row to the dataValues array.
+ * Prepare the dataSet and add a dataValue
  * @param orgUnit Contains the organisation unit uid and the closed and opening dates used to set the orgUnit as active or inactive
  * @param dataElement The dataelement to be pushed with this organisation Unit
  * @param dataValues array to add all the datavalues row of the given dataElementgroup
@@ -298,7 +290,7 @@ OrganisationUnitActivator.prototype.prepareDataOrgUnitDataValues = function (org
             //if the closedDate is previous than the openingDate and the opening date is previous than the period date the orgunit is active
         }
 
-        console.info("Added new Dataperiod", "dataElement uid:" + row.dataElement + " period " + row.period + " - " + fixDate + " OrgUnit uid: " + row.orgUnit + " value " + row.value);
+        console.info("Added new Dataperiod. dataElement uid:" + row.dataElement + " period " + row.period + " - " + fixDate + " OrgUnit uid: " + row.orgUnit + " value " + row.value);
 
         //push the row into the dataValues array
         dataValues.push(row);
