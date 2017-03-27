@@ -77,7 +77,7 @@ OrganisationUnitActivator.prototype.processDataElementGroup = function () {
     var endpoint = this.endpoints.DATAELEMENTGROUP.replace("UID", this.dataElementGroup);
     var url = this.prepareOptions(endpoint);
     console.info("Request the dataelements from a dataelementgroup ", "URL: " + url.url);
-    this.asyncCalls++
+    this.asyncCalls++;
     request(url, function (error, response, body) {
         if (error != undefined) {
             console.error("Server not found " + error);
@@ -91,7 +91,7 @@ OrganisationUnitActivator.prototype.processDataElementGroup = function () {
         //Process every dataElements
         dataElements.forEach(function (dataElement) { 
             console.info("\nConfig:\n", JSON.stringify(dataElement, null, "\t")); 
-            _this.prepareDataElement(dataElement) 
+            _this.prepareDataElement(dataElement);
             if (_this.isDataElementValid(dataElement)) {
                 _this.processDataElements(dataElement); 
             }
@@ -296,18 +296,17 @@ OrganisationUnitActivator.prototype.pushDataValues = function () {
     console.info("\nPending asyncalls: " + this.asyncCalls);
     if (this.asyncCalls == 0) {
         console.log("Pushing dataValues");
-        this.push(this.buildDataValues(this.dataValues));
+        this.push();
         console.log("The dataValues created from the dataElementGroup " + this.dataElementGroup + " was pushed");
     }
 };
 
 /**
- * Build the dataValues
- * @param rows A dataValue array cointaining all the periods for each dataelement+organisation unit 
+ * Build the dataValues 
  * @return a valid Json datavalues
  */
-OrganisationUnitActivator.prototype.buildDataValues = function (rows) {
-    var dataValues = rows.map(value => {
+OrganisationUnitActivator.prototype.buildDataValues = function () {
+    var dataValues = this.dataValues.map(value => {
         return {
             "dataElement": value.dataElement,
             "orgUnit": value.orgUnit,
@@ -320,14 +319,13 @@ OrganisationUnitActivator.prototype.buildDataValues = function (rows) {
 }
 
 /**
- * Post datavalues to server
-@param dataValues a json formatted to be pushed as Post body
+ * Post datavalues to server 
  */
-OrganisationUnitActivator.prototype.push = function (dataValues) {
+OrganisationUnitActivator.prototype.push = function () {
     var _this = this;
     var url = this.prepareOptions(this.endpoints.DATAVALUE_SETS);
     url.json = true;
-    url.body = dataValues;
+    url.body = this.buildDataValues();
     console.info("Push of all the datavalues url", "URL: " + url.url); 
     request.post(url, function (error, response, body) {
         if (error != undefined) {
