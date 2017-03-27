@@ -337,5 +337,6 @@ OrganisationUnitActivator.prototype.push = function (dataValues) {
         }
 
         console.log("Values posted OK, summary", JSON.stringify(body, null, "\t"));
+        console.log("\nScript operations finished. You can close this window."); 
     });
 }
