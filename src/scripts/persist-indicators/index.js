@@ -80,17 +80,33 @@ AutoIndicatorsLoader.prototype.loadIndicator = function(indicator) {
     var url = this.prepareOptions(this.endpoints.DATASETS.replace("UID", indicator.dataSet));
     request(url, function(error, response, body) {
         indicator.periodType = JSON.parse(body).periodType;
-        //prepare indicator
-        _this.prepareParamIndicator(indicator);
-        //prepare orgunits
-        _this.prepareParamOrgUnits(indicator);        
-        //prepare periods
-        _this.prepareParamPeriod(indicator);
-        //read data + post
-        _this.readAndPost(indicator);
+        if (indicator.orgUnitGroup != undefined) {
+            var orgUnitGroups = indicator.orgUnitGroup.split(";");
+            orgUnitGroups.forEach(function (orgUnitGroup) {
+                indicator.orgUnitGroup = orgUnitGroup;
+                _this.prepareAndPostIndicator(indicator);
+            });
+        } else {
+            this.prepareAndPostIndicator(indicator);
+        }
     });    
 
 };
+
+/**
+ * Prepare the indicator api url with the correct params
+ * @param indicator The indicator that will be enriched with additional readable properties.
+ */
+AutoIndicatorsLoader.prototype.prepareAndPostIndicator = function (indicator) {
+    //prepare indicator
+    this.prepareParamIndicator(indicator);
+    //prepare orgunits
+    this.prepareParamOrgUnits(indicator);
+    //prepare periods
+    this.prepareParamPeriod(indicator);
+    //read data + post
+    this.readAndPost(indicator);
+}
 
 /**
  * Turns codified attribute values into readable properties in the indicator (orgunit, dataset, ...)
