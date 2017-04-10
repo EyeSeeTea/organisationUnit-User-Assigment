@@ -94,7 +94,7 @@ AutoIndicatorsLoader.prototype.loadIndicator = function(indicator) {
 };
 
 /**
- * Prepare the indicator api url with the correct params
+ * Prepare and post the indicator with the correct params
  * @param indicator The indicator that will be enriched with additional readable properties.
  */
 AutoIndicatorsLoader.prototype.prepareAndPostIndicator = function (indicator) {

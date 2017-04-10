@@ -139,7 +139,6 @@ OrganisationUnitActivator.prototype.prepareDataElement = function (dataElement) 
 /** 
  * Load the organisationUnit for each dataelement.
  * @param dataElement The active dataElement
- * @param dataValues array to add all the datavalues row of the given dataElementgroup 
  */
 OrganisationUnitActivator.prototype.processDataElements = function (dataElement) {
     console.log("\nLoading organisationUnits...");
@@ -159,7 +158,6 @@ OrganisationUnitActivator.prototype.processDataElements = function (dataElement)
 /** 
  * Load the organisationUnit parent using the parent attribute and loads the organisationUnit by level.
  * @param dataElement The active dataElement
- * @param dataValues array to add all the datavalues row of the given dataElementgroup 
  */
 OrganisationUnitActivator.prototype.processOrgUnitsFromParentLevel = function (dataElement) {
     var _this = this;
@@ -197,7 +195,6 @@ OrganisationUnitActivator.prototype.processOrgUnitsByLevel = function (dataEleme
 /** 
  * Load the organisationUnit by orgUnit group
  * @param dataElement The active dataElement
- * @param dataValues array to add all the datavalues row of the given dataElementgroup
  * @param orgUnitGroup The uid of the organisation unit group
  */
 OrganisationUnitActivator.prototype.processOrgUnitsByOrgUnitGroup = function (dataElement, orgUnitGroup) {
@@ -205,7 +202,7 @@ OrganisationUnitActivator.prototype.processOrgUnitsByOrgUnitGroup = function (da
     var endpoint = this.endpoints.ORGANISATION_UNITS_BY_ORGANISATION_UNIT_GROUP.replace("UID", orgUnitGroup);
     var url = this.prepareOptions(endpoint);
     console.info("Request the organisationUnit using the OrgUnitGroup attribute", "URL: " + url.url);
-    _this.asyncCalls++;
+    this.asyncCalls++;
     request(url, function (error, response, body) {
         _this.processOrgUnitResponse(error, response, body, dataElement);
     });
