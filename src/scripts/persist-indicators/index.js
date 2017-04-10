@@ -98,6 +98,8 @@ AutoIndicatorsLoader.prototype.loadIndicator = function(indicator) {
  * @param indicator The indicator that will be enriched with additional readable properties.
  */
 AutoIndicatorsLoader.prototype.prepareAndPostIndicator = function (indicator) {
+    //Additional container where analytics params will be added
+    indicator.queryParams = [];
     //prepare indicator
     this.prepareParamIndicator(indicator);
     //prepare orgunits
@@ -124,8 +126,6 @@ AutoIndicatorsLoader.prototype.turnAttributeValuesIntoProperties = function(indi
         //Add straight property to indicator
         indicator[attributeName] = attributeValue;
     }
-    //Additional container where analytics params will be added
-    indicator.queryParams = [];
 }
 
 /**
@@ -195,9 +195,11 @@ AutoIndicatorsLoader.prototype.readAndPost = function(indicator) {
     request(url, function(error, response, body) {
         console.log("\nLoading indicator " + indicator.displayName);
         var rows = JSON.parse(body).rows;
-        console.log(JSON.stringify(rows,null,"\t"));
-        var dataValues = _this.buildDataValues(indicator, rows);
-        _this.postDataValues(dataValues);
+        console.log(JSON.stringify(rows, null, "\t"));
+        if (rows != undefined) {
+            var dataValues = _this.buildDataValues(indicator, rows);
+            _this.postDataValues(dataValues);
+        }
     });    
 };
 
