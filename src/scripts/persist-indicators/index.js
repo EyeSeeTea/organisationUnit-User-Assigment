@@ -87,7 +87,7 @@ AutoIndicatorsLoader.prototype.loadIndicator = function(indicator) {
                 _this.prepareAndPostIndicator(indicator);
             });
         } else {
-            this.prepareAndPostIndicator(indicator);
+            _this.prepareAndPostIndicator(indicator);
         }
     });    
 
