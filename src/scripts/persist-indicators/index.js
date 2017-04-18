@@ -80,17 +80,35 @@ AutoIndicatorsLoader.prototype.loadIndicator = function(indicator) {
     var url = this.prepareOptions(this.endpoints.DATASETS.replace("UID", indicator.dataSet));
     request(url, function(error, response, body) {
         indicator.periodType = JSON.parse(body).periodType;
-        //prepare indicator
-        _this.prepareParamIndicator(indicator);
-        //prepare orgunits
-        _this.prepareParamOrgUnits(indicator);        
-        //prepare periods
-        _this.prepareParamPeriod(indicator);
-        //read data + post
-        _this.readAndPost(indicator);
+        if (indicator.orgUnitGroup != undefined) {
+            var orgUnitGroups = indicator.orgUnitGroup.split(";");
+            orgUnitGroups.forEach(function (orgUnitGroup) {
+                indicator.orgUnitGroup = orgUnitGroup;
+                _this.prepareAndPostIndicator(indicator);
+            });
+        } else {
+            _this.prepareAndPostIndicator(indicator);
+        }
     });    
 
 };
+
+/**
+ * Prepare and post the indicator with the correct params
+ * @param indicator The indicator that will be enriched with additional readable properties.
+ */
+AutoIndicatorsLoader.prototype.prepareAndPostIndicator = function (indicator) {
+    //Additional container where analytics params will be added
+    indicator.queryParams = [];
+    //prepare indicator
+    this.prepareParamIndicator(indicator);
+    //prepare orgunits
+    this.prepareParamOrgUnits(indicator);
+    //prepare periods
+    this.prepareParamPeriod(indicator);
+    //read data + post
+    this.readAndPost(indicator);
+}
 
 /**
  * Turns codified attribute values into readable properties in the indicator (orgunit, dataset, ...)
@@ -108,8 +126,6 @@ AutoIndicatorsLoader.prototype.turnAttributeValuesIntoProperties = function(indi
         //Add straight property to indicator
         indicator[attributeName] = attributeValue;
     }
-    //Additional container where analytics params will be added
-    indicator.queryParams = [];
 }
 
 /**
@@ -179,9 +195,11 @@ AutoIndicatorsLoader.prototype.readAndPost = function(indicator) {
     request(url, function(error, response, body) {
         console.log("\nLoading indicator " + indicator.displayName);
         var rows = JSON.parse(body).rows;
-        console.log(JSON.stringify(rows,null,"\t"));
-        var dataValues = _this.buildDataValues(indicator, rows);
-        _this.postDataValues(dataValues);
+        console.log(JSON.stringify(rows, null, "\t"));
+        if (rows != undefined) {
+            var dataValues = _this.buildDataValues(indicator, rows);
+            _this.postDataValues(dataValues);
+        }
     });    
 };
 
