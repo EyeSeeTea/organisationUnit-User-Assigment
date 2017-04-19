@@ -139,13 +139,16 @@ OrganisationUnitActivator.prototype.prepareDataElement = function (dataElement) 
 /** 
  * Load the organisationUnit for each dataelement.
  * @param dataElement The active dataElement
- * @param dataValues array to add all the datavalues row of the given dataElementgroup 
  */
 OrganisationUnitActivator.prototype.processDataElements = function (dataElement) {
     console.log("\nLoading organisationUnits...");
     if (dataElement.orgUnitGroup != undefined) {
+        _this = this;
         console.info("\nLoading orgUnits from orgUnitGroup " + dataElement.orgUnitGroup);
-        this.processOrgUnitsByOrgUnitGroup(dataElement);
+        var orgUnitGroups = dataElement.orgUnitGroup.split(";");
+        orgUnitGroups.forEach(function (organisationUnitGroup) {
+            _this.processOrgUnitsByOrgUnitGroup(dataElement, organisationUnitGroup);
+        });
     } else {
         console.info("\nLoading orgUnits from parent: " + dataElement.parent + " level: " + dataElement.level);
         this.processOrgUnitsFromParentLevel(dataElement);
@@ -155,7 +158,6 @@ OrganisationUnitActivator.prototype.processDataElements = function (dataElement)
 /** 
  * Load the organisationUnit parent using the parent attribute and loads the organisationUnit by level.
  * @param dataElement The active dataElement
- * @param dataValues array to add all the datavalues row of the given dataElementgroup 
  */
 OrganisationUnitActivator.prototype.processOrgUnitsFromParentLevel = function (dataElement) {
     var _this = this;
@@ -193,11 +195,11 @@ OrganisationUnitActivator.prototype.processOrgUnitsByLevel = function (dataEleme
 /** 
  * Load the organisationUnit by orgUnit group
  * @param dataElement The active dataElement
- * @param dataValues array to add all the datavalues row of the given dataElementgroup 
+ * @param orgUnitGroup The uid of the organisation unit group
  */
-OrganisationUnitActivator.prototype.processOrgUnitsByOrgUnitGroup = function (dataElement) {
+OrganisationUnitActivator.prototype.processOrgUnitsByOrgUnitGroup = function (dataElement, orgUnitGroup) {
     var _this = this;
-    var endpoint = this.endpoints.ORGANISATION_UNITS_BY_ORGANISATION_UNIT_GROUP.replace("UID", dataElement.orgUnitGroup);
+    var endpoint = this.endpoints.ORGANISATION_UNITS_BY_ORGANISATION_UNIT_GROUP.replace("UID", orgUnitGroup);
     var url = this.prepareOptions(endpoint);
     console.info("Request the organisationUnit using the OrgUnitGroup attribute", "URL: " + url.url);
     this.asyncCalls++;
