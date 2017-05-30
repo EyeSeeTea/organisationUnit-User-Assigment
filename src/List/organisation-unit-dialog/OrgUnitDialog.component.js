@@ -20,9 +20,9 @@ class OrgUnitDialog extends React.Component {
         super(props, context);
 
         this.state = {
-            searchValue: '',    
-            originalRoots: [this.props.root],        
-            rootOrgUnits: [this.props.root],
+            searchValue: '',
+            originalRoots: this.props.roots,
+            rootOrgUnits: this.props.roots,
             selected: this.props.model.organisationUnits.toArray().map(i => i.id),
             groups: [],
             levels: [],
@@ -68,7 +68,7 @@ class OrgUnitDialog extends React.Component {
 
                 const organisationUnitRequest = this.context.d2.models.organisationUnits
                     .filter().on('displayName').ilike(searchValue)
-                    .list({ fields: 'id,displayName,path,children::isNotEmpty'})
+                    .list({ fields: 'id,displayName,path,children::isNotEmpty', withinUserHierarchy: true })
                     .then(modelCollection => modelCollection.toArray());
 
                 return Observable.fromPromise(organisationUnitRequest);
@@ -279,7 +279,7 @@ class OrgUnitDialog extends React.Component {
 }
 OrgUnitDialog.propTypes = {
     onRequestClose: React.PropTypes.func.isRequired,
-    root: React.PropTypes.object.isRequired,
+    roots: React.PropTypes.arrayOf(React.PropTypes.object).isRequired,
     model: React.PropTypes.object.isRequired,
     onOrgUnitAssignmentSaved: React.PropTypes.func.isRequired,
     onOrgUnitAssignmentError: React.PropTypes.func.isRequired,
