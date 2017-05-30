@@ -84,6 +84,8 @@ class OrgUnitDialog extends React.Component {
     componentWillReceiveProps(props) {
         if (props.model) {
             this.setState({
+                originalRoots: props.roots,
+                rootOrgUnits: props.roots,
                 selected: props.model.organisationUnits.toArray().map(i => i.id),
             });
         }
