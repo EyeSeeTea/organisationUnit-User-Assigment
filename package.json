@@ -1,6 +1,6 @@
 {
   "name": "organisation-unit-assignment-app",
-  "version": "0.0.1",
+  "version": "0.0.5",
   "description": "DHIS2 Organisation Unit Assignment app",
   "main": "index.js",
   "repository": {
@@ -96,7 +96,7 @@
     },
     "activities": {
       "dhis": {
-        "href": ".."
+        "href": "*"
       }
     }
   }

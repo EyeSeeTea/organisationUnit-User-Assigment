@@ -104,6 +104,7 @@ const List = React.createClass({
             },
             orgunitassignment: {
                 model: null,
+                roots: [],
                 open: false,
             },
             dataElementOperand: {
@@ -304,7 +305,7 @@ const List = React.createClass({
 
                 {this.state.orgunitassignment.model ? <OrgUnitDialog
                     model={this.state.orgunitassignment.model}
-                    root={this.state.orgunitassignment.root}
+                    roots={this.state.orgunitassignment.roots}
                     open={this.state.orgunitassignment.open}
                     onOrgUnitAssignmentSaved={this._orgUnitAssignmentSaved}
                     onOrgUnitAssignmentError={this._orgUnitAssignmentError}
