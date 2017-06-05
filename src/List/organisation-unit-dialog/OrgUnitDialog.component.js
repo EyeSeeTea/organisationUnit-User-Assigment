@@ -133,6 +133,14 @@ class OrgUnitDialog extends React.Component {
     }
 
     save() {
+        // On a model save, the property userGroups is not sent on the request because the flag
+        // owner is set to false (see d2/helpers/json.js, getOwnedPropertyJSON). That's ok, the 
+        // problem is that the server, not receiving this field, clears all the user groups 
+        // for that user. It looks like a bug on the 2.25 API (it works on 2.26)
+        //
+        // Simple (if hacky) solution: set the owner flag so the field is sent.
+        this.props.model.modelDefinition.modelValidations.userGroups.owner = true;
+
         if (this.props.model.isDirty()) {
             this.setState({ loading: true });
             this.props.model
