@@ -1,5 +1,7 @@
 import React from 'react';
 
+import isEqual from 'lodash.isequal';
+
 import Dialog from 'material-ui/lib/dialog';
 import FlatButton from 'material-ui/lib/flat-button';
 import RaisedButton from 'material-ui/lib/raised-button';
@@ -140,6 +142,13 @@ class OrgUnitDialog extends React.Component {
         //
         // Simple (if hacky) solution: set the owner flag so the field is sent.
         this.props.model.modelDefinition.modelValidations.userGroups.owner = true;
+
+        // Use same organisation units for <Data output and analysis organisation units>
+        const {model} = this.props;
+        const getIds = (collection) => collection.toArray().map(obj => obj.id);
+        if (!isEqual(getIds(model.organisationUnits), getIds(model.dataViewOrganisationUnits))) {
+            model.dataViewOrganisationUnits = model.organisationUnits;
+        }
 
         if (this.props.model.isDirty()) {
             this.setState({ loading: true });
