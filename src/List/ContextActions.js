@@ -20,7 +20,8 @@ contextActions.details
 contextActions.assignToOrgUnits
     .subscribe(async({ data: model }) => {
         const d2 = await getD2();
-        const modelItem = await d2.models[model.modelDefinition.name].get(model.id);
+        const options = {fields: ":all,organisationUnits[id,path,displayName]"};
+        const modelItem = await d2.models[model.modelDefinition.name].get(model.id, options);
         const userOrgUnitRoots = await appStateStore
             .map(appState => appState.userOrganisationUnits.toArray())
             .first().toPromise();

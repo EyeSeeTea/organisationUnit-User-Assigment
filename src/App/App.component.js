@@ -12,6 +12,8 @@ import LoadingMask from '../loading-mask/LoadingMask.component';
 import withStateFrom from 'd2-ui/lib/component-helpers/withStateFrom';
 import { Observable } from 'rx';
 import SinglePanelLayout from 'd2-ui/lib/layout/SinglePanel.component';
+import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
+import PropTypes from 'prop-types';
 
 log.setLevel(log.levels.INFO);
 
@@ -27,7 +29,8 @@ import { goToRoute } from '../router';
 
 const HeaderBar = withStateFrom(headerBarStore$, HeaderBarComponent);
 
-const withMuiContext = Object.assign(AppWithD2.childContextTypes, { muiTheme: React.PropTypes.object });
+const withMuiContext = Object.assign(AppWithD2.childContextTypes,
+    {muiTheme: PropTypes.object});
 class App extends AppWithD2 {
     getChildContext() {
         return Object.assign({}, super.getChildContext(), {
@@ -77,13 +80,15 @@ class App extends AppWithD2 {
         }
 
         return (
-            <div>
-                <HeaderBar />
-                <SinglePanelLayout>
-                    <MainContent>{this.props.children}</MainContent>
-                </SinglePanelLayout>}
-                <SnackbarContainer />
-            </div>
+            <MuiThemeProvider muiTheme={appTheme}>
+                <div>
+                    <HeaderBar />
+                    <SinglePanelLayout>
+                        <MainContent>{this.props.children}</MainContent>
+                    </SinglePanelLayout>}
+                    <SnackbarContainer />
+                </div>
+            </MuiThemeProvider>
         );
     }
 }
