@@ -10,8 +10,9 @@ import { render } from 'react-dom';
 import { init, config, getUserSettings, getManifest } from 'd2/lib/d2';
 import log from 'loglevel';
 import LoadingMask from './loading-mask/LoadingMask.component';
-import dhis2 from 'd2-ui/lib/header-bar/dhis2';
 import routes from './router';
+import appTheme from './App/app.theme';
+import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 import '../scss/app.scss';
 
 if (process.env.NODE_ENV !== 'production') {
@@ -39,7 +40,8 @@ function startApp() {
     );
 }
 
-render(<LoadingMask />, document.getElementById('app'));
+render(<MuiThemeProvider muiTheme={appTheme}><LoadingMask /></MuiThemeProvider>,
+    document.getElementById('app'));
 
 getManifest('./manifest.webapp')
     .then(manifest => {
@@ -47,11 +49,6 @@ getManifest('./manifest.webapp')
         config.baseUrl = `${baseUrl}/api/24`;
         log.info(`Loading: ${manifest.name} v${manifest.version}`);
         log.info(`Built ${manifest.manifest_generated_at}`);
-
-        // Set the baseUrl to localhost if we are in dev mode
-        if (process.env.NODE_ENV !== 'production') {
-            dhis2.settings.baseUrl = baseUrl;
-        }
     })
     .then(getUserSettings)
     .then(configI18n)

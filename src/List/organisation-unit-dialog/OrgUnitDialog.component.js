@@ -2,20 +2,21 @@ import React from 'react';
 
 import isEqual from 'lodash.isequal';
 
-import Dialog from 'material-ui/lib/dialog';
-import FlatButton from 'material-ui/lib/flat-button';
-import RaisedButton from 'material-ui/lib/raised-button';
+import Dialog from 'material-ui/Dialog/Dialog';
+import FlatButton from 'material-ui/FlatButton/FlatButton';
+import RaisedButton from 'material-ui/RaisedButton/RaisedButton';
 
 import LoadingMask from 'd2-ui/lib/loading-mask/LoadingMask.component';
-import TextField from 'material-ui/lib/text-field';
+import TextField from 'material-ui/TextField/TextField';
 import Action from 'd2-ui/lib/action/Action';
-import { Observable } from 'rx';
+import { Observable } from 'rxjs/Rx';
 import OrgUnitTree from 'd2-ui/lib/org-unit-tree/OrgUnitTree.component';
 import OrgUnitSelectByLevel from 'd2-ui/lib/org-unit-select/OrgUnitSelectByLevel.component';
 import OrgUnitSelectByGroup from 'd2-ui/lib/org-unit-select/OrgUnitSelectByGroup.component';
 import OrgUnitSelectAll from 'd2-ui/lib/org-unit-select/OrgUnitSelectAll.component';
 
 import snackbarActions from '../../Snackbar/snack.actions';
+import PropTypes from 'prop-types';
 
 class OrgUnitDialog extends React.Component {
     constructor(props, context) {
@@ -25,7 +26,7 @@ class OrgUnitDialog extends React.Component {
             searchValue: '',
             originalRoots: this.props.roots,
             rootOrgUnits: this.props.roots,
-            selected: this.props.model.organisationUnits.toArray().map(i => i.id),
+            selected: this.props.model.organisationUnits.toArray().map(i => i.path),
             groups: [],
             levels: [],
             loading: false,
@@ -44,71 +45,75 @@ class OrgUnitDialog extends React.Component {
         Promise.all([
             d2.models.organisationUnitLevels.list({
                 paging: false,
-                fields: 'id,level,displayName',
+                fields: 'id,level,displayName,path',
                 order: 'level:asc',
             }),
             d2.models.organisationUnitGroups.list({
                 paging: false,
-                fields: 'id,displayName',
+                fields: 'id,displayName,path',
             }),
         ])
             .then(([
                 levels,
                 groups,
-            ]) => {                
+            ]) => {
                 this.setState({ 
                     groups, 
                     levels });
             });
             
-        this.disposable = this._searchOrganisationUnits.map(action => action.data)
-            .debounce(400)
+
+        this.disposable = this._searchOrganisationUnits
+            .map(action => action.data)
+            .debounceTime(400)
+            .distinctUntilChanged()
             .map(searchValue => {
                 if (!searchValue.trim()) {
-                    return Observable.just(this.state.originalRoots);
+                    return Observable.of(this.state.originalRoots);
+                } else {
+                    const organisationUnitRequest = this.context.d2.models.organisationUnits
+                        .filter().on('displayName').ilike(searchValue)
+                        .list({ fields: 'id,displayName,path,children::isNotEmpty', withinUserHierarchy: true })
+                        .then(modelCollection => modelCollection.toArray());
+                    return Observable.fromPromise(organisationUnitRequest);
                 }
-
-                const organisationUnitRequest = this.context.d2.models.organisationUnits
-                    .filter().on('displayName').ilike(searchValue)
-                    .list({ fields: 'id,displayName,path,children::isNotEmpty', withinUserHierarchy: true })
-                    .then(modelCollection => modelCollection.toArray());
-
-                return Observable.fromPromise(organisationUnitRequest);
             })
             .concatAll()
-            .subscribe((models) => this.setState({ rootOrgUnits: models }));            
+            .subscribe((orgUnits) => {
+                this.setState({ rootOrgUnits: orgUnits });
+            });
     }
     
     componentWillUnmount() {
         this.disposable && this.disposable.dispose();
-    }    
+    }
 
     componentWillReceiveProps(props) {
         if (props.model) {
             this.setState({
                 originalRoots: props.roots,
                 rootOrgUnits: props.roots,
-                selected: props.model.organisationUnits.toArray().map(i => i.id),
+                selected: props.model.organisationUnits.toArray().map(i => i.path),
             });
         }
-    }   
+    }
     
     setNewSelection(selected) {
         const d2 = this.context.d2;
         const modelOrgUnits = this.props.model.organisationUnits;
-        const assigned = modelOrgUnits.toArray().map(ou => ou.id);
+        const assigned = modelOrgUnits.toArray().map(ou => ou.path);
 
         const additions = selected
         // Filter out already assigned ids
-            .filter(id => assigned.indexOf(id) === -1)
+            .filter(path => assigned.indexOf(path) === -1)
             // Add the rest
-            .map(id => d2.models.organisationUnits.create({ id }));
+            .map(path => d2.models.organisationUnits.create({ id: _.last(path.split("/")), path }));
 
         const deletions = assigned
         // Filter out ids that should be left in
-            .filter(id => selected.indexOf(id) === -1)
+            .filter(path => selected.indexOf(path) === -1)
             // Add the rest
-            .map(id => d2.models.organisationUnits.create({ id }));
+            .map(path => d2.models.organisationUnits.create({ id: _.last(path.split("/")), path }));
 
         additions.forEach(ou => {
             modelOrgUnits.add(ou);
@@ -121,25 +126,29 @@ class OrgUnitDialog extends React.Component {
     }
 
     toggleOrgUnit(e, orgUnit) {
-        if (this.state.selected.indexOf(orgUnit.id) === -1) {
+        if (this.state.selected.indexOf(orgUnit.path) === -1) {
             this.props.model.organisationUnits.add(orgUnit);
             this.setState(state => ({
-                selected: state.selected.concat(orgUnit.id),
+                selected: state.selected.concat(orgUnit.path),
             }));
         } else {
             this.props.model.organisationUnits.remove(orgUnit);
             this.setState(state => ({
-                selected: state.selected.filter(x => x !== orgUnit.id),
+                selected: state.selected.filter(x => x !== orgUnit.path),
             }));
         }
     }
 
     save() {
+        // d2-ui@27.x.y sends user.userCredentials[id], to which a 2.25 server responds
+        // <400 - BadRequest - Missing required property username>. 
+        // Solution: Clear user.userCredentials
+        this.props.model.userCredentials = undefined;
+
         // On a model save, the property userGroups is not sent on the request because the flag
-        // owner is set to false (see d2/helpers/json.js, getOwnedPropertyJSON). That's ok, the 
-        // problem is that the server, not receiving this field, clears all the user groups 
+        // owner is set to false (see d2/helpers/json.js, getOwnedPropertyJSON). That's ok, the
+        // problem is that the server, not receiving this field, clears all the user groups
         // for that user. It looks like a bug on the 2.25 API (it works on 2.26)
-        //
         // Simple (if hacky) solution: set the owner flag so the field is sent.
         this.props.model.modelDefinition.modelValidations.userGroups.owner = true;
 
@@ -179,9 +188,9 @@ class OrgUnitDialog extends React.Component {
                             key={rootOu.id}
                             selected={this.state.selected}
                             root={rootOu}
-                            onClick={this.toggleOrgUnit}
+                            onSelectClick={this.toggleOrgUnit}
                             emitModel
-                            initiallyExpanded={[rootOu.id]}
+                            initiallyExpanded={[rootOu.path]}
                         />
                     ))}
                 </div>
@@ -301,14 +310,14 @@ class OrgUnitDialog extends React.Component {
     }
 }
 OrgUnitDialog.propTypes = {
-    onRequestClose: React.PropTypes.func.isRequired,
-    roots: React.PropTypes.arrayOf(React.PropTypes.object).isRequired,
-    model: React.PropTypes.object.isRequired,
-    onOrgUnitAssignmentSaved: React.PropTypes.func.isRequired,
-    onOrgUnitAssignmentError: React.PropTypes.func.isRequired,
+    onRequestClose: PropTypes.func.isRequired,
+    roots: PropTypes.arrayOf(PropTypes.object).isRequired,
+    model: PropTypes.object.isRequired,
+    onOrgUnitAssignmentSaved: PropTypes.func.isRequired,
+    onOrgUnitAssignmentError: PropTypes.func.isRequired,
 };
 OrgUnitDialog.contextTypes = {
-    d2: React.PropTypes.any,
+    d2: PropTypes.any,
 };
 
 export default OrgUnitDialog;
