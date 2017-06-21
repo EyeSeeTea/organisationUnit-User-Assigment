@@ -9,7 +9,7 @@ import detailsStore from './details.store';
 import listStore from './list.store';
 import listActions from './list.actions';
 import ObserverRegistry from '../utils/ObserverRegistry.mixin';
-import Paper from 'material-ui/lib/paper';
+import Paper from 'material-ui/Paper/Paper';
 import Translate from 'd2-ui/lib/i18n/Translate.mixin';
 import SearchBox from './SearchBox.component';
 import LoadingStatus from './LoadingStatus.component';
@@ -20,6 +20,7 @@ import OrgUnitDialog from './organisation-unit-dialog/OrgUnitDialog.component';
 import snackActions from '../Snackbar/snack.actions';
 import Heading from 'd2-ui/lib/headings/Heading.component';
 import { Observable } from 'rx';
+import PropTypes from 'prop-types';
 
 // Filters out any actions `edit`, `clone` when the user can not update/edit this modelType
 function actionsThatRequireCreate(action) {
@@ -79,8 +80,8 @@ class DetailsBoxWithScroll extends Component {
 
 const List = React.createClass({
     propTypes: {
-        params: React.PropTypes.shape({
-            modelType: React.PropTypes.string.isRequired,
+        params: PropTypes.shape({
+            modelType: PropTypes.string.isRequired,
         }),
     },
 
@@ -288,7 +289,7 @@ const List = React.createClass({
                             columns={this.state.tableColumns}
                             contextMenuActions={availableActions}
                             contextMenuIcons={contextMenuIcons}
-                            primaryAction={availableActions.details}
+                            primaryAction={(user, ev) => availableActions.details(user)}
                             isContextActionAllowed={this.isContextActionAllowed}
                         />
                         {this.state.dataRows.length || this.state.isLoading ? null : <div>No results found</div>}
