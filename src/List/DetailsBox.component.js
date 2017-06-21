@@ -1,17 +1,18 @@
 import React from 'react';
 import classes from 'classnames';
 
-import FontIcon from 'material-ui/lib/font-icon';
+import FontIcon from 'material-ui/FontIcon/FontIcon';
 
+import PropTypes from 'prop-types';
 import Translate from 'd2-ui/lib/i18n/Translate.mixin';
 import camelCaseToUnderscores from 'd2-utilizr/lib/camelCaseToUnderscores';
 
 export default React.createClass({
     propTypes: {
-        fields: React.PropTypes.array,
-        showDetailBox: React.PropTypes.bool,
-        source: React.PropTypes.object,
-        onClose: React.PropTypes.func,
+        fields: PropTypes.array,
+        showDetailBox: PropTypes.bool,
+        source: PropTypes.object,
+        onClose: PropTypes.func,
     },
 
     mixins: [Translate],
@@ -20,6 +21,7 @@ export default React.createClass({
         return {
             fields: [
                 'name',
+                'username',
                 'shortName',
                 'code',
                 'displayDescription',

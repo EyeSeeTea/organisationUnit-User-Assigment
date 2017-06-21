@@ -3,14 +3,16 @@ import { Subject, Observable } from 'rx';
 import Store from 'd2-ui/lib/store/Store';
 import appState from '../App/appStateStore';
 
-export const fieldFilteringForQuery = 'displayName|rename(name),shortName,id,lastUpdated,created,displayDescription,code,publicAccess,access,href,level';
+export const fieldFilteringForQuery =
+    'displayName|rename(name),shortName,id,userCredentials[username],lastUpdated,created,' +
+    'displayDescription,code,publicAccess,access,href,level';
 
 const columnObservable = appState
     .filter(appState => appState.sideBar && appState.sideBar.currentSubSection)
     .map(appState => appState.sideBar.currentSubSection)
     .distinctUntilChanged()
     .map(subSection => {
-        return ['name', 'lastUpdated'];
+        return ['name', 'username', 'lastUpdated'];
     });
 
 export default Store.create({
@@ -24,7 +26,10 @@ export default Store.create({
                 this.setState({
                     tableColumns: columns,
                     pager: modelCollection.pager,
-                    list: modelCollection.toArray(),
+                    list: modelCollection.toArray().map(user => {
+                        user.username = user.userCredentials && user.userCredentials.username;
+                        return user;
+                    }),
                 });
             });
         return this;
@@ -63,15 +68,22 @@ export default Store.create({
                 error(`${modelType} is not a valid schema name`);
             }
 
-            let modelDefinition = d2.models[modelType];
-
+            let modelDefinition;
             if (searchString) {
-                modelDefinition = d2.models[modelType].filter().on('displayName').ilike(searchString);
+                modelDefinition = d2.models[modelType]
+                    .filter().on('displayName').ilike(searchString)
+                    .filter().on('userCredentials.username').ilike(searchString);
+            } else {
+                modelDefinition = d2.models[modelType]
+                    .filter().on('name').notEqual('default');
             }
 
             const listSearchPromise = modelDefinition
-                .filter().on('name').notEqual('default')
-                .list({ fields: fieldFilteringForQuery });
+                .list({
+                    fields: fieldFilteringForQuery,
+                    rootJunction: "OR",
+                    order: "displayName:ASC",
+                });
 
             this.listSourceSubject.onNext(Observable.fromPromise(listSearchPromise));
 
