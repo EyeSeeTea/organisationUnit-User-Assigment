@@ -289,7 +289,7 @@ const List = React.createClass({
                             columns={this.state.tableColumns}
                             contextMenuActions={availableActions}
                             contextMenuIcons={contextMenuIcons}
-                            primaryAction={(user, ev) => availableActions.details(user)}
+                            primaryAction={(user, ev) => availableActions.assignToOrgUnits(user)}
                             isContextActionAllowed={this.isContextActionAllowed}
                         />
                         {this.state.dataRows.length || this.state.isLoading ? null : <div>No results found</div>}
