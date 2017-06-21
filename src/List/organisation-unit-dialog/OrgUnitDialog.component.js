@@ -255,9 +255,13 @@ class OrgUnitDialog extends React.Component {
             />,
         ];
 
+        const user = this.props.model;
+        const username = user.userCredentials ? user.userCredentials.username : '-';
+        const title = `${user.displayName} (${username}) ${this.getTranslation('org_unit_assignment')}`
+
         return (
             <Dialog
-                title={`${this.props.model.displayName} ${this.getTranslation('org_unit_assignment')}`}
+                title={title}
                 actions={dialogActions}
                 autoScrollBodyContent
                 autoDetectWindowHeight

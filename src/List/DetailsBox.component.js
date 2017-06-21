@@ -21,6 +21,7 @@ export default React.createClass({
         return {
             fields: [
                 'name',
+                'username',
                 'shortName',
                 'code',
                 'displayDescription',
