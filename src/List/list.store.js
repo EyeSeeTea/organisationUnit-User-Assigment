@@ -12,7 +12,7 @@ const columnObservable = appState
     .map(appState => appState.sideBar.currentSubSection)
     .distinctUntilChanged()
     .map(subSection => {
-        return ['username', 'name', 'lastUpdated'];
+        return ['name', 'username', 'lastUpdated'];
     });
 
 export default Store.create({
@@ -68,16 +68,22 @@ export default Store.create({
                 error(`${modelType} is not a valid schema name`);
             }
 
-            let modelDefinition = d2.models[modelType];
-
+            let modelDefinition;
             if (searchString) {
                 modelDefinition = d2.models[modelType]
                     .filter().on('displayName').ilike(searchString)
                     .filter().on('userCredentials.username').ilike(searchString);
+            } else {
+                modelDefinition = d2.models[modelType]
+                    .filter().on('name').notEqual('default');
             }
 
             const listSearchPromise = modelDefinition
-                .list({ fields: fieldFilteringForQuery, rootJunction: "OR" });
+                .list({
+                    fields: fieldFilteringForQuery,
+                    rootJunction: "OR",
+                    order: "displayName:ASC",
+                });
 
             this.listSourceSubject.onNext(Observable.fromPromise(listSearchPromise));
 

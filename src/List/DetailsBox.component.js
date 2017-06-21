@@ -19,8 +19,8 @@ export default React.createClass({
     getDefaultProps() {
         return {
             fields: [
-                'username',
                 'name',
+                'username',
                 'shortName',
                 'code',
                 'displayDescription',
