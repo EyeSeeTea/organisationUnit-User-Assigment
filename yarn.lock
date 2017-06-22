@@ -1789,9 +1789,9 @@ d2-manifest@^1.0.0-2:
     minimist "^1.1.0"
     readline-sync "^1.4.1"
 
-d2-ui@27.0.1:
+"d2-ui@git+https://github.com/EyeSeeTea/d2-ui#2.27-org_unit_intersection_policy":
   version "27.0.1"
-  resolved "https://registry.yarnpkg.com/d2-ui/-/d2-ui-27.0.1.tgz#efddcd74c1b25ef85b961f51281773666feac9f4"
+  resolved "git+https://github.com/EyeSeeTea/d2-ui#c7fc8848c89c4ad99ebbe70e4b9dc77346bad89d"
 
 d2-utilizr@0.2.9:
   version "0.2.9"
