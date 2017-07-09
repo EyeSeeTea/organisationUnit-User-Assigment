@@ -7,6 +7,9 @@ export const fieldFilteringForQuery =
     'displayName|rename(name),shortName,id,userCredentials[username],lastUpdated,created,' +
     'displayDescription,code,publicAccess,access,href,level';
 
+const orderForQuery = (modelName) =>
+    (modelName === 'organisationUnitLevel') ? 'level:ASC' : 'displayName:ASC'
+
 const columnObservable = appState
     .filter(appState => appState.sideBar && appState.sideBar.currentSubSection)
     .map(appState => appState.sideBar.currentSubSection)
@@ -42,7 +45,7 @@ export default Store.create({
                     .filter().on('name').notEqual('default')
                     .list({
                         fields: fieldFilteringForQuery,
-                        order: (modelName === 'organisationUnitLevel') ? 'level:ASC' : 'displayName:ASC'
+                        order: orderForQuery(modelName),
                     });
 
                 this.listSourceSubject.onNext(Observable.fromPromise(listPromise));
@@ -62,7 +65,7 @@ export default Store.create({
         this.listSourceSubject.onNext(Observable.fromPromise(this.state.pager.getPreviousPage()));
     },
 
-    async searchByName(modelType, searchString, complete, error) {
+    async filter(modelType, searchString, canManage, complete, error) {
         getD2().then(d2 => {
             if (!d2.models[modelType]) {
                 error(`${modelType} is not a valid schema name`);
@@ -82,7 +85,8 @@ export default Store.create({
                 .list({
                     fields: fieldFilteringForQuery,
                     rootJunction: "OR",
-                    order: "displayName:ASC",
+                    order: orderForQuery("user"),
+                    canManage: canManage,
                 });
 
             this.listSourceSubject.onNext(Observable.fromPromise(listSearchPromise));

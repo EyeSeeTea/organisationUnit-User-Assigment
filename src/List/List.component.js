@@ -19,6 +19,7 @@ import orgUnitDialogStore from './organisation-unit-dialog/organisationUnitDialo
 import OrgUnitDialog from './organisation-unit-dialog/OrgUnitDialog.component';
 import snackActions from '../Snackbar/snack.actions';
 import Heading from 'd2-ui/lib/headings/Heading.component';
+import Checkbox from 'material-ui/Checkbox/Checkbox';
 import { Observable } from 'rx';
 import PropTypes from 'prop-types';
 
@@ -95,6 +96,8 @@ const List = React.createClass({
             },
             isLoading: true,
             detailsObject: null,
+            searchString: "",
+            showAllUsers: true,
             sharing: {
                 model: null,
                 open: false,
@@ -203,13 +206,28 @@ const List = React.createClass({
             .subscribe((value) => {
                 this.setState({
                     isLoading: true,
+                    searchString: value,
                 });
 
-                listActions.searchByName({ modelType: this.props.params.modelType, searchString: value })
+                listActions.filter({
+                        modelType: this.props.params.modelType,
+                        searchString: value,
+                        canManage: !this.state.showAllUsers,
+                    })
                     .subscribe(() => {}, (error) => log.error(error));
             });
 
         this.registerDisposable(searchListByNameDisposable);
+    },
+
+    _onCanManageClick(ev, isChecked) {
+        listActions.filter({
+            modelType: this.props.params.modelType,
+            searchString: this.state.searchString,
+            canManage: isChecked,
+        });
+
+        this.setState({showAllUsers: !isChecked});
     },
 
     render() {
@@ -271,8 +289,15 @@ const List = React.createClass({
                     <Heading>{this.getTranslation(`${camelCaseToUnderscores(this.props.params.modelType)}_management`)}</Heading>                    
                 </div>
                 <div>
-                    <div style={{ float: 'left', width: '50%' }}>
+                    <div style={{ float: 'left', width: '30%' }}>
                         <SearchBox searchObserverHandler={this.searchListByName}/>
+                    </div>
+                    <div style={{ float: 'left', width: '30%', marginTop: 10, marginLeft: 5 }}>
+                        <Checkbox
+                            label={this.getTranslation('display_only_users_can_manage')}
+                            onCheck={this._onCanManageClick}
+                            checked={!this.state.showAllUsers}
+                        />
                     </div>
                     <div>
                         <Pagination {...paginationProps} />
