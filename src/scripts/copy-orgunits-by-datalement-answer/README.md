@@ -1,4 +1,4 @@
-= Description
+## Description
 
 Copy organisation unit groups filtering events by program and data element answers. By default,
 it filters for RDT-Training dataelement.
@@ -11,13 +11,13 @@ Logic:
 - For each event, look for a data element with a specific answer (by default: RDT-trained = "1").
 - Add OUs to target OU Group for all matcher organisation units.
 
-= Setup
+## Setup
 
 ```
 $ yarn install
 ```
 
-= Run
+## Run
 
 * Run with the default configuration (uses `config.json`):
 
@@ -34,7 +34,7 @@ $ npm run start -- \
     --fromDate="-60"
 ```
 
-= Development
+## Development
 
 Check code style with ESLint:
 
